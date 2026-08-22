@@ -1,0 +1,6 @@
+{
+  "name": "Khám Phá Địa Cầu 3D - Học Địa Lí Tiểu Học",
+  "description": "Ứng dụng thiết bị hỗ trợ dạy học Địa lí trực quan dành cho học sinh tiểu học: chuyển đổi Địa cầu 3D ↔ Bản đồ 2D, Việt Nam và các nước láng giềng, xác định phương hướng, phân biệt Bắc - Nam bán cầu và công cụ giảng dạy tương tác cho giáo viên.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
