@@ -33,6 +33,9 @@ interface GlobeSceneProps {
   borderOnlyMode?: boolean;
   hideLabels?: boolean;
   onGlobeCountryClick?: (countryId: string, countryObj?: CountryData) => void;
+  highlightedCountryIds?: string[];
+  targetCountryId?: string | null;
+  mapFocusRequest?: { lat: number; lng: number; altitude?: number; zoom2D?: number; timestamp: number } | null;
 }
 
 // Global cached ThreeJS sprites to avoid regenerating canvas textures on every frame
@@ -289,7 +292,10 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
   flightArc,
   borderOnlyMode = false,
   hideLabels = false,
-  onGlobeCountryClick
+  onGlobeCountryClick,
+  highlightedCountryIds = [],
+  targetCountryId = null,
+  mapFocusRequest = null
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<GlobeInstance | null>(null);
@@ -304,6 +310,12 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
   // Synchronize latest props and state to refs to prevent stale closure inside globe.gl callbacks
   const selectedCountryRef = useRef(selectedCountry);
   selectedCountryRef.current = selectedCountry;
+
+  const highlightedCountryIdsRef = useRef(highlightedCountryIds);
+  highlightedCountryIdsRef.current = highlightedCountryIds;
+
+  const targetCountryIdRef = useRef(targetCountryId);
+  targetCountryIdRef.current = targetCountryId;
 
   const hoveredPolygonRef = useRef(hoveredPolygon);
   hoveredPolygonRef.current = hoveredPolygon;
@@ -335,7 +347,8 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
     const fetchGeoJSON = async () => {
       // Priority 1: Local asset for offline / low connectivity in schools
       try {
-        const localRes = await fetch('/assets/geo/countries.geojson');
+        const geoUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/geo/countries.geojson`;
+        const localRes = await fetch(geoUrl);
         if (localRes.ok) {
           const data = await localRes.json();
           if (isMounted && data && data.features && data.features.length > 0) {
@@ -827,6 +840,8 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
       .polygonAltitude((d: unknown) => {
         const feature = d as GeoFeature;
         const c = getCountryFromFeature(feature);
+        if (targetCountryIdRef.current && c && c.id === targetCountryIdRef.current) return 0.007;
+        if (highlightedCountryIdsRef.current && c && highlightedCountryIdsRef.current.includes(c.id)) return 0.005;
         if (feature === hoveredPolygonRef.current) return 0.004;
         if (c && selectedCountryRef.current && c.id === selectedCountryRef.current.id) return 0.006;
         return 0.0005;
@@ -837,6 +852,18 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
 
         if (borderOnlyModeRef.current) {
           return 'rgba(0, 0, 0, 0)';
+        }
+
+        if (targetCountryIdRef.current && c && c.id === targetCountryIdRef.current) {
+          return 'rgba(234, 179, 8, 0.45)';
+        }
+
+        if (c && c.id === 'vietnam' && highlightedCountryIdsRef.current?.includes('vietnam')) {
+          return 'rgba(239, 68, 68, 0.45)';
+        }
+
+        if (highlightedCountryIdsRef.current && c && highlightedCountryIdsRef.current.includes(c.id)) {
+          return 'rgba(245, 158, 11, 0.38)';
         }
 
         if (feature === hoveredPolygonRef.current) {
@@ -861,6 +888,18 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
           return 'rgba(0, 0, 0, 0)';
         }
 
+        if (targetCountryIdRef.current && c && c.id === targetCountryIdRef.current) {
+          return 'rgba(234, 179, 8, 0.5)';
+        }
+
+        if (c && c.id === 'vietnam' && highlightedCountryIdsRef.current?.includes('vietnam')) {
+          return 'rgba(239, 68, 68, 0.5)';
+        }
+
+        if (highlightedCountryIdsRef.current && c && highlightedCountryIdsRef.current.includes(c.id)) {
+          return 'rgba(245, 158, 11, 0.45)';
+        }
+
         if (feature === hoveredPolygonRef.current) {
           return 'rgba(56, 189, 248, 0.25)';
         }
@@ -872,6 +911,15 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
       .polygonStrokeColor((d: unknown) => {
         const feature = d as GeoFeature;
         const c = getCountryFromFeature(feature);
+        if (targetCountryIdRef.current && c && c.id === targetCountryIdRef.current) {
+          return '#fde047';
+        }
+        if (c && c.id === 'vietnam' && highlightedCountryIdsRef.current?.includes('vietnam')) {
+          return '#ef4444';
+        }
+        if (highlightedCountryIdsRef.current && c && highlightedCountryIdsRef.current.includes(c.id)) {
+          return '#f59e0b';
+        }
         if (feature === hoveredPolygonRef.current) {
           return '#38bdf8';
         }
@@ -1124,9 +1172,30 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
     activeContinent,
     hoveredPolygon,
     borderOnlyMode,
+    highlightedCountryIds,
+    targetCountryId,
     layers,
     isGlobeReady
   ]);
+
+  // Handle external map focus requests (e.g. from learning modules)
+  useEffect(() => {
+    if (!globeRef.current || !isGlobeReady || !mapFocusRequest) return;
+
+    const targetAlt = mapFocusRequest.altitude ?? 1.9;
+    globeRef.current.controls().autoRotate = false;
+    globeRef.current.pointOfView(
+      {
+        lat: mapFocusRequest.lat,
+        lng: mapFocusRequest.lng,
+        altitude: targetAlt
+      },
+      1200
+    );
+    setCurrentPovLat(mapFocusRequest.lat);
+    setCurrentPovLng(mapFocusRequest.lng);
+    setCurrentZoomAltitude(targetAlt);
+  }, [mapFocusRequest, isGlobeReady]);
 
   // Fly to country when selected (with smooth camera sequence & altitude state sync)
   useEffect(() => {

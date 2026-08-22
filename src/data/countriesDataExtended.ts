@@ -247,6 +247,55 @@ export const EXTENDED_COUNTRIES_DATA: Record<string, CountryData> = {
       { name: 'Vườn quốc gia Ulu Temburong', description: 'Viên ngọc xanh sinh thái giữa lòng Borneo' }
     ]
   },
+  timor_leste: {
+    id: 'timor_leste',
+    code: 'TL',
+    nameVi: 'Timor-Leste (Đông Timor)',
+    nameEn: 'Timor-Leste',
+    flag: '🇹🇱',
+    capital: 'Dili',
+    continent: 'Châu Á',
+    continentId: 'asia',
+    isSoutheastAsia: true,
+    relativeDirectionFromVietnam: 'Phía Đông Nam',
+    population: 'Khoảng 1,3 triệu người',
+    populationNum: 1.3,
+    area: '14.874 km²',
+    areaNum: 15,
+    language: 'Tiếng Bồ Đào Nha, Tiếng Tetum',
+    climate: 'Nhiệt đới nóng ẩm, có mùa mưa và mùa khô rõ rệt',
+    currency: 'Đô la Mỹ (USD)',
+    shortDescription: 'Quốc gia trẻ nhất Đông Nam Á nằm trên nửa phía đông đảo Timor, sở hữu rạn san hô đảo Atauro phong phú bậc nhất thế giới và đỉnh núi Tatamailau mây phủ.',
+    lat: -8.8742,
+    lng: 125.7275,
+    altitude: 1.9,
+    color: '#f97316',
+    natureHighlights: [
+      'Đảo Atauro với hệ sinh thái rạn san hô đa dạng sinh học hàng đầu hành tinh.',
+      'Đỉnh núi Tatamailau (2.963m) cao nhất Timor-Leste quanh năm mây mù che phủ.',
+      'Hồ muối Ira Lalaro - vùng đầm lầy chim nước lớn nhất đất nước.'
+    ],
+    cultureHighlights: [
+      'Biểu tượng văn hóa cá sấu thiêng liêng trong truyền thuyết sáng thế của người Timor.',
+      'Nghệ thuật dệt vải Tais truyền thống rực rỡ sắc màu thổ cẩm.',
+      'Tượng Chúa Kitô Vua Cristo Rei sừng sững trên mỏm núi nhìn ra vịnh Dili.'
+    ],
+    foodHighlights: [
+      'Cơm Batar Da\'an hầm ngô, đậu đỏ và bí đỏ bổ dưỡng thơm bùi.',
+      'Món cá nướng Ikan Sabuko ướp me và ớt cay nồng.',
+      'Cà phê hữu cơ Maubisse trồng trên núi cao thơm ngát đặc trưng.'
+    ],
+    funFacts: [
+      'Vùng biển quanh đảo Atauro của Timor-Leste được các nhà khoa học xác nhận là nơi có mật độ loài cá rạn san hô phong phú nhất thế giới.',
+      'Timor-Leste là một trong hai quốc gia duy nhất ở châu Á có đa số người dân theo Công giáo (cùng với Philippines).',
+      'Timor-Leste đã chính thức được kết nạp làm quan sát viên và đang trong tiến trình gia nhập đầy đủ vào ASEAN.'
+    ],
+    landmarks: [
+      { name: 'Tượng Chúa Cristo Rei Dili', description: 'Bức tượng đồng uy nghi cao 27m trên đỉnh đồi hướng ra biển Dili' },
+      { name: 'Đảo Atauro', description: 'Thiên đường lặn biển với rạn san hô nguyên sinh quý giá' },
+      { name: 'Đỉnh núi Tatamailau', description: 'Nóc nhà Timor-Leste với cảnh quan bình minh trên biển mây' }
+    ]
+  },
   mongolia: {
     id: 'mongolia',
     code: 'MN',

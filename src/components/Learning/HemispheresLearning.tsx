@@ -1,24 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Globe2, 
   Sun, 
-  Compass, 
-  Eye, 
   CheckCircle2, 
   X, 
-  HelpCircle, 
+  Eye, 
   Sparkles,
-  ArrowRight
+  MapPin
 } from 'lucide-react';
 import { CountryData } from '../../types';
 import { COUNTRIES_DATA } from '../../data/countries';
 import confetti from 'canvas-confetti';
 
+export type HemisphereAnswer = 'north' | 'south' | 'both';
+
 interface HemispheresLearningProps {
   onSelectCountry: (country: CountryData) => void;
   onClose: () => void;
   onToggleEquatorLayer?: (enabled: boolean) => void;
+}
+
+interface PracticeItem {
+  countryId: string;
+  expected: HemisphereAnswer;
+  reason: string;
 }
 
 export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
@@ -28,30 +34,71 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'concepts' | 'practice' | 'trivia'>('concepts');
   const [practiceIndex, setPracticeIndex] = useState(0);
-  const [selectedHemisphere, setSelectedHemisphere] = useState<'north' | 'south' | null>(null);
+  const [selectedHemisphere, setSelectedHemisphere] = useState<HemisphereAnswer | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  // Sample countries for hemisphere practice
-  const practiceCountries = [
-    { countryId: 'vietnam', expected: 'north', reason: 'Việt Nam nằm hoàn toàn ở Bắc bán cầu (khoảng 8°30\'B đến 23°23\'B).' },
-    { countryId: 'australia', expected: 'south', reason: 'Australia nằm hoàn toàn ở Nam bán cầu, vì thế mùa hè ở đây trùng với mùa đông của Việt Nam!' },
-    { countryId: 'russia', expected: 'north', reason: 'Nga là quốc gia rộng lớn nằm trọn vẹn ở Bắc bán cầu gần Bắc Cực.' },
-    { countryId: 'brazil', expected: 'south', reason: 'Brazil có đường Xích đạo đi qua phía bắc, nhưng phần lớn lãnh thổ nằm ở Nam bán cầu.' },
-    { countryId: 'south_africa', expected: 'south', reason: 'Nam Phi nằm ở cực nam của châu Phi thuộc Nam bán cầu.' },
-    { countryId: 'japan', expected: 'north', reason: 'Nhật Bản nằm ở vùng ôn đới Bắc bán cầu.' },
-    { countryId: 'indonesia', expected: 'both', reason: 'Indonesia nằm vắt ngang đường Xích đạo, có các đảo ở cả Bắc và Nam bán cầu!' }
+  // Automatically enable Equator layer when opening Hemispheres learning
+  useEffect(() => {
+    if (onToggleEquatorLayer) {
+      onToggleEquatorLayer(true);
+    }
+  }, [onToggleEquatorLayer]);
+
+  // Verified geographical hemisphere data
+  const practiceCountries: PracticeItem[] = [
+    { 
+      countryId: 'vietnam', 
+      expected: 'north', 
+      reason: 'Việt Nam nằm hoàn toàn ở Bắc bán cầu (từ khoảng 8°30\'B đến 23°23\'B), phía trên đường Xích đạo.' 
+    },
+    { 
+      countryId: 'indonesia', 
+      expected: 'both', 
+      reason: 'Indonesia nằm vắt ngang đường Xích đạo (0°), có các đảo nằm ở cả Bắc bán cầu (Bắc Sumatra, Bắc Borneo, Bắc Sulawesi...) và Nam bán cầu (Java, Bali, Nam Sumatra...).' 
+    },
+    { 
+      countryId: 'brazil', 
+      expected: 'both', 
+      reason: 'Phần lớn lãnh thổ Brazil nằm ở Nam bán cầu, nhưng đường Xích đạo đi qua phía Bắc đất nước (gần thành phố Macapá và cửa sông Amazon), nên thuộc cả 2 bán cầu.' 
+    },
+    { 
+      countryId: 'australia', 
+      expected: 'south', 
+      reason: 'Australia nằm hoàn toàn ở Nam bán cầu, vì thế mùa hè ở đây (tháng 12 - tháng 2) ngược lại với mùa đông ở Việt Nam.' 
+    },
+    { 
+      countryId: 'russia', 
+      expected: 'north', 
+      reason: 'Nga là quốc gia rộng lớn nhất thế giới, nằm hoàn toàn ở Bắc bán cầu trải dài đến tận Bắc Cực.' 
+    },
+    { 
+      countryId: 'south_africa', 
+      expected: 'south', 
+      reason: 'Nam Phi nằm ở cực nam của châu lục châu Phi, thuộc hoàn toàn Nam bán cầu.' 
+    },
+    { 
+      countryId: 'japan', 
+      expected: 'north', 
+      reason: 'Nhật Bản là quốc đảo nằm ở vùng ôn đới Bắc bán cầu thuộc khu vực Đông Á.' 
+    }
   ];
 
   const currentCountryObj = COUNTRIES_DATA[practiceCountries[practiceIndex].countryId];
   const currentExpected = practiceCountries[practiceIndex].expected;
 
-  const handleChooseHemisphere = (choice: 'north' | 'south') => {
+  const handleChooseHemisphere = (choice: HemisphereAnswer) => {
     setSelectedHemisphere(choice);
-    const isCorrect = choice === currentExpected || (currentExpected === 'both');
+    const isCorrect = choice === currentExpected;
     if (isCorrect) {
       try {
-        confetti({ particleCount: 35, spread: 50, origin: { y: 0.8 } });
+        confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
       } catch {}
+    }
+  };
+
+  const handleViewOnMap = () => {
+    if (currentCountryObj) {
+      onSelectCountry(currentCountryObj);
     }
   };
 
@@ -72,11 +119,11 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
             <h3 className="font-bold text-base text-white flex items-center gap-2">
               Bắc Bán Cầu & Nam Bán Cầu
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Đường Xích Đạo
+                Đường Xích Đạo (0°)
               </span>
             </h3>
             <p className="text-xs text-slate-400">
-              Tìm hiểu đường Xích đạo (0°) và sự phân chia hai nửa bán cầu Trái Đất
+              Tìm hiểu đường Xích đạo và cách phân biệt các bán cầu trên Trái Đất
             </p>
           </div>
         </div>
@@ -143,7 +190,7 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
                   🌐 Đường Xích Đạo (0° Vĩ tuyến)
                 </h4>
                 <p className="leading-relaxed">
-                  Đường tròn lớn nhất chia đôi Trái Đất thành hai nửa bằng nhau: <strong>Bắc bán cầu</strong> (nửa phía trên) và <strong>Nam bán cầu</strong> (nửa phía dưới).
+                  Đường tròn lớn nhất bao quanh Trái Đất chia hành tinh thành hai nửa: <strong>Bắc bán cầu</strong> (nửa phía trên) và <strong>Nam bán cầu</strong> (nửa phía dưới).
                 </p>
               </div>
 
@@ -152,34 +199,44 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
                   🇻🇳 Vị Trí Của Việt Nam
                 </h4>
                 <p className="leading-relaxed">
-                  Việt Nam nằm hoàn toàn ở <strong>Bắc bán cầu</strong> và thuộc <strong>Bán cầu Đông</strong>, trong vành đai nhiệt đới gió mùa chan hòa ánh nắng.
+                  Việt Nam nằm hoàn toàn ở <strong>Bắc bán cầu</strong> và thuộc <strong>Bán cầu Đông</strong>, nằm trong đới khí hậu nhiệt đới gió mùa.
                 </p>
               </div>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/50 flex items-center justify-between">
               <span className="text-slate-300">
-                💡 Đường viền màu vàng cam trên quả địa cầu chính là <strong>Đường Xích đạo 0°</strong>.
+                💡 <strong>Đường màu vàng cam</strong> phát sáng trên quả địa cầu chính là <strong>Đường Xích đạo 0°</strong>.
               </span>
             </div>
           </div>
         )}
 
-        {/* Tab 2: Practice */}
+        {/* Tab 2: Practice (Quiz with 3 Options) */}
         {activeTab === 'practice' && currentCountryObj && (
           <div className="p-4 rounded-2xl bg-slate-800/80 border border-amber-500/30">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
                 Câu {practiceIndex + 1} / {practiceCountries.length}
               </span>
-              <button
-                onClick={() => setShowAnswer(!showAnswer)}
-                className="flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-semibold text-amber-300 transition-colors"
-                title="Dành cho giáo viên: Bật/tắt đáp án ngay"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>{showAnswer ? 'Ẩn đáp án' : '👁 Hiện đáp án'}</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleViewOnMap}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-xs font-semibold text-sky-300 transition-colors"
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>Xem trên bản đồ</span>
+                </button>
+
+                <button
+                  onClick={() => setShowAnswer(!showAnswer)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-semibold text-amber-300 transition-colors"
+                  title="Dành cho giáo viên: Bật/tắt đáp án ngay"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>{showAnswer ? 'Ẩn đáp án' : '👁 Đáp án'}</span>
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/80 border border-slate-700 mb-3">
@@ -189,58 +246,78 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
                   Đất nước {currentCountryObj.nameVi} nằm ở bán cầu nào?
                 </h4>
                 <p className="text-xs text-slate-400">
-                  Thủ đô: {currentCountryObj.capital} • {currentCountryObj.continent}
+                  Thủ đô: {currentCountryObj.capital} • Châu lục: {currentCountryObj.continent}
                 </p>
               </div>
             </div>
 
-            {/* Selection Buttons */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* 3 Selection Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <button
                 onClick={() => handleChooseHemisphere('north')}
-                className={`p-3 rounded-xl border font-bold text-xs transition-all flex items-center justify-center gap-2 ${
+                className={`p-2.5 rounded-xl border font-bold text-xs transition-all flex items-center justify-center gap-1.5 ${
                   showAnswer
-                    ? currentExpected === 'north' || currentExpected === 'both'
-                      ? 'bg-emerald-900/70 border-emerald-500 text-emerald-200'
+                    ? currentExpected === 'north'
+                      ? 'bg-emerald-900/70 border-emerald-500 text-emerald-200 ring-2 ring-emerald-500/50'
                       : 'bg-slate-900/50 border-slate-700 text-slate-400'
                     : selectedHemisphere === 'north'
-                    ? currentExpected === 'north' || currentExpected === 'both'
+                    ? currentExpected === 'north'
                       ? 'bg-emerald-900/70 border-emerald-500 text-emerald-200'
                       : 'bg-red-900/70 border-red-500 text-red-200'
                     : 'bg-slate-900/70 border-slate-700 hover:border-sky-500 text-slate-200'
                 }`}
               >
                 <span>🌍 Bắc Bán Cầu</span>
-                {(showAnswer || selectedHemisphere === 'north') && (currentExpected === 'north' || currentExpected === 'both') && (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                {(showAnswer || selectedHemisphere === 'north') && currentExpected === 'north' && (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 )}
               </button>
 
               <button
                 onClick={() => handleChooseHemisphere('south')}
-                className={`p-3 rounded-xl border font-bold text-xs transition-all flex items-center justify-center gap-2 ${
+                className={`p-2.5 rounded-xl border font-bold text-xs transition-all flex items-center justify-center gap-1.5 ${
                   showAnswer
-                    ? currentExpected === 'south' || currentExpected === 'both'
-                      ? 'bg-emerald-900/70 border-emerald-500 text-emerald-200'
+                    ? currentExpected === 'south'
+                      ? 'bg-emerald-900/70 border-emerald-500 text-emerald-200 ring-2 ring-emerald-500/50'
                       : 'bg-slate-900/50 border-slate-700 text-slate-400'
                     : selectedHemisphere === 'south'
-                    ? currentExpected === 'south' || currentExpected === 'both'
+                    ? currentExpected === 'south'
                       ? 'bg-emerald-900/70 border-emerald-500 text-emerald-200'
                       : 'bg-red-900/70 border-red-500 text-red-200'
                     : 'bg-slate-900/70 border-slate-700 hover:border-sky-500 text-slate-200'
                 }`}
               >
                 <span>🌏 Nam Bán Cầu</span>
-                {(showAnswer || selectedHemisphere === 'south') && (currentExpected === 'south' || currentExpected === 'both') && (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                {(showAnswer || selectedHemisphere === 'south') && currentExpected === 'south' && (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                )}
+              </button>
+
+              <button
+                onClick={() => handleChooseHemisphere('both')}
+                className={`p-2.5 rounded-xl border font-bold text-xs transition-all flex items-center justify-center gap-1.5 ${
+                  showAnswer
+                    ? currentExpected === 'both'
+                      ? 'bg-emerald-900/70 border-emerald-500 text-emerald-200 ring-2 ring-emerald-500/50'
+                      : 'bg-slate-900/50 border-slate-700 text-slate-400'
+                    : selectedHemisphere === 'both'
+                    ? currentExpected === 'both'
+                      ? 'bg-emerald-900/70 border-emerald-500 text-emerald-200'
+                      : 'bg-red-900/70 border-red-500 text-red-200'
+                    : 'bg-slate-900/70 border-slate-700 hover:border-amber-500 text-slate-200'
+                }`}
+              >
+                <span>🌐 Cả 2 Bán Cầu</span>
+                {(showAnswer || selectedHemisphere === 'both') && currentExpected === 'both' && (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 )}
               </button>
             </div>
 
-            {/* Explanation */}
+            {/* Detailed Explanation */}
             {(showAnswer || selectedHemisphere !== null) && (
-              <div className="mt-3 p-2.5 rounded-xl bg-slate-900/90 border border-slate-700/60 text-xs text-sky-200">
-                💡 <strong>Giải thích:</strong> {practiceCountries[practiceIndex].reason}
+              <div className="mt-3 p-3 rounded-xl bg-slate-900/90 border border-slate-700/60 text-xs text-sky-200 leading-relaxed">
+                💡 <strong>Giải thích địa lí:</strong> {practiceCountries[practiceIndex].reason}
               </div>
             )}
 
@@ -272,7 +349,7 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
                 }}
                 className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-bold text-slate-950 shadow-md shadow-amber-500/30"
               >
-                {practiceIndex < practiceCountries.length - 1 ? 'Nước tiếp theo →' : 'Làm lại'}
+                {practiceIndex < practiceCountries.length - 1 ? 'Nước tiếp theo →' : 'Làm lại từ đầu'}
               </button>
             </div>
           </div>
@@ -287,10 +364,10 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
                 Hiện Tượng Mùa Ngược Nhau Giữa Hai Bán Cầu
               </h4>
               <p className="leading-relaxed">
-                Do trục Trái Đất nghiêng 23.5° khi quay quanh Mặt Trời, khi <strong>Bắc bán cầu</strong> nghiêng về phía Mặt Trời (mùa hè), thì <strong>Nam bán cầu</strong> ngả ra xa (mùa đông).
+                Do trục Trái Đất nghiêng 23.5° khi chuyển động quanh Mặt Trời, khi <strong>Bắc bán cầu</strong> nghiêng về phía Mặt Trời (mùa hè), thì <strong>Nam bán cầu</strong> lại nghiêng ra xa (mùa đông).
               </p>
               <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-slate-200">
-                🎉 <strong>Điều thú vị:</strong> Vào dịp Giáng sinh tháng 12, khi học sinh Việt Nam mặc áo ấm đón mùa đông thì trẻ em ở Australia lại vui chơi tắm biển dưới ánh nắng rực rỡ mùa hè!
+                🎉 <strong>Ví dụ sinh động:</strong> Vào dịp Giáng sinh tháng 12, khi học sinh Việt Nam mặc áo ấm đón mùa đông thì trẻ em ở Australia lại vui chơi tắm biển dưới ánh nắng rực rỡ của mùa hè!
               </div>
             </div>
           </div>

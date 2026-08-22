@@ -1,18 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { 
   Compass, 
-  ArrowUp, 
-  ArrowDown, 
-  ArrowLeft, 
-  ArrowRight, 
   Eye, 
   CheckCircle2, 
   Sparkles, 
-  HelpCircle,
-  RotateCw,
   X,
-  Target
+  Target,
+  MapPin
 } from 'lucide-react';
 import { CountryData, DirectionQuizMode } from '../../types';
 import { COUNTRIES_DATA } from '../../data/countries';
@@ -23,18 +18,42 @@ interface DirectionLearningProps {
   selectedCountry: CountryData | null;
   onSelectCountry: (country: CountryData) => void;
   onClose: () => void;
+  onFocusRegion?: (lat: number, lng: number, altitude: number, zoom2D?: number) => void;
+  onSetHighlightCountries?: (countryIds: string[], targetId?: string | null) => void;
 }
 
 export const DirectionLearning: React.FC<DirectionLearningProps> = ({
   selectedCountry,
   onSelectCountry,
-  onClose
+  onClose,
+  onFocusRegion,
+  onSetHighlightCountries
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'rules' | 'relative' | 'quiz'>('rules');
   const [directionMode, setDirectionMode] = useState<DirectionQuizMode>('4_cardinal');
   const [quizIndex, setQuizIndex] = useState(0);
   const [userSelection, setUserSelection] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+
+  // Focus and highlight when entering 'relative' tab
+  useEffect(() => {
+    if (activeSubTab === 'relative') {
+      if (selectedCountry && selectedCountry.id !== 'vietnam') {
+        onSetHighlightCountries?.(['vietnam', selectedCountry.id], selectedCountry.id);
+        onFocusRegion?.((VIETNAM_COORDINATES.lat + selectedCountry.lat) / 2, (VIETNAM_COORDINATES.lng + selectedCountry.lng) / 2, 2.0, 2.2);
+      } else {
+        onSetHighlightCountries?.(['vietnam'], 'vietnam');
+        onFocusRegion?.(VIETNAM_COORDINATES.lat, VIETNAM_COORDINATES.lng, 2.0, 2.4);
+      }
+    } else if (activeSubTab === 'rules') {
+      onSetHighlightCountries?.(['vietnam'], 'vietnam');
+    }
+  }, [activeSubTab, selectedCountry, onFocusRegion, onSetHighlightCountries]);
+
+  // Initial focus
+  useEffect(() => {
+    onFocusRegion?.(VIETNAM_COORDINATES.lat, VIETNAM_COORDINATES.lng, 2.0, 2.4);
+  }, [onFocusRegion]);
 
   // Direction Questions for Elementary Students
   const directionQuestions = useMemo(() => [
@@ -43,7 +62,7 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
       prompt: 'Quy ước phương hướng trên bản đồ: Phía TRÊN của bản đồ là hướng nào?',
       options: ['Hướng Bắc', 'Hướng Nam', 'Hướng Đông', 'Hướng Tây'],
       correct: 'Hướng Bắc',
-      explanation: 'Theo quy ước địa lí chuẩn: Phía trên luôn là hướng Bắc, phía dưới là hướng Nam.'
+      explanation: 'Theo quy ước chuẩn của bản đồ địa lí: Phía trên là hướng Bắc, phía dưới là hướng Nam.'
     },
     {
       id: 'd2',
@@ -71,7 +90,7 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
       prompt: 'Quần đảo Hoàng Sa và Trường Sa nằm ở hướng nào so với đất liền Việt Nam?',
       options: ['Phía Tây', 'Phía Bắc', 'Phía Đông', 'Phía Nam'],
       correct: 'Phía Đông',
-      explanation: 'Hai quần đảo thiêng liêng Hoàng Sa và Trường Sa nằm giữa vùng Biển Đông ở phía Đông của nước ta.'
+      explanation: 'Hai quần đảo Hoàng Sa và Trường Sa nằm giữa vùng Biển Đông ở phía Đông của nước ta.'
     },
     {
       id: 'd6',
@@ -118,10 +137,14 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
           spread: 60,
           origin: { y: 0.8 }
         });
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
+  };
+
+  const handleSelectExploreCountry = (c: CountryData) => {
+    onSelectCountry(c);
+    onSetHighlightCountries?.(['vietnam', c.id], c.id);
+    onFocusRegion?.((VIETNAM_COORDINATES.lat + c.lat) / 2, (VIETNAM_COORDINATES.lng + c.lng) / 2, 2.0, 2.2);
   };
 
   return (
@@ -145,7 +168,7 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
               </span>
             </h3>
             <p className="text-xs text-slate-400">
-              Quy tắc 4 hướng chính, 8 hướng và vị trí tương đối so với Việt Nam
+              Quy tắc 4 hướng chính, 8 hướng và xác định phương hướng so với Việt Nam
             </p>
           </div>
         </div>
@@ -348,27 +371,103 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
                     </p>
                   )}
                 </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-400">Chọn quốc gia khác để so sánh phương hướng:</span>
+                  <button
+                    onClick={() => onSelectCountry(COUNTRIES_DATA.vietnam)}
+                    className="text-xs text-sky-400 hover:text-sky-300 underline"
+                  >
+                    Xem lại danh sách
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="p-5 rounded-2xl bg-slate-800/50 border border-dashed border-slate-700 text-center space-y-3">
-                <p className="text-xs text-slate-300">
-                  👉 <strong>Hãy chọn một quốc gia</strong> trên bản đồ hoặc bấm vào danh sách dưới đây để xác định phương hướng so với Việt Nam:
+              <div className="p-4 rounded-2xl bg-slate-800/50 border border-dashed border-slate-700 space-y-3">
+                <p className="text-xs text-slate-300 text-center font-medium">
+                  👉 <strong>Bấm chọn một quốc gia</strong> trên bản đồ hoặc chọn từ các nhóm phương hướng dưới đây:
                 </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {['china', 'laos', 'cambodia', 'japan', 'thailand', 'australia', 'russia', 'france', 'usa'].map((cId) => {
-                    const c = COUNTRIES_DATA[cId];
-                    if (!c) return null;
-                    return (
-                      <button
-                        key={cId}
-                        onClick={() => onSelectCountry(c)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-sky-600 border border-slate-700 hover:border-sky-400 text-xs font-semibold text-slate-200 transition-colors flex items-center gap-1.5"
-                      >
-                        <span>{c.flag}</span>
-                        <span>{c.nameVi}</span>
-                      </button>
-                    );
-                  })}
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                    <p className="text-[11px] font-bold text-red-400 flex items-center gap-1">
+                      <span>↑ Phía Bắc</span>
+                    </p>
+                    {['china', 'russia', 'mongolia'].map(id => {
+                      const c = COUNTRIES_DATA[id];
+                      if (!c) return null;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => handleSelectExploreCountry(c)}
+                          className="w-full text-left px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-sky-600/80 text-[11px] text-slate-200 transition-colors truncate flex items-center gap-1"
+                        >
+                          <span>{c.flag}</span>
+                          <span className="truncate">{c.nameVi}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                    <p className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                      <span>← Phía Tây</span>
+                    </p>
+                    {['laos', 'thailand', 'myanmar', 'india'].map(id => {
+                      const c = COUNTRIES_DATA[id];
+                      if (!c) return null;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => handleSelectExploreCountry(c)}
+                          className="w-full text-left px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-sky-600/80 text-[11px] text-slate-200 transition-colors truncate flex items-center gap-1"
+                        >
+                          <span>{c.flag}</span>
+                          <span className="truncate">{c.nameVi}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                    <p className="text-[11px] font-bold text-amber-400 flex items-center gap-1">
+                      <span>→ Phía Đông</span>
+                    </p>
+                    {['philippines', 'japan', 'korea_south'].map(id => {
+                      const c = COUNTRIES_DATA[id];
+                      if (!c) return null;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => handleSelectExploreCountry(c)}
+                          className="w-full text-left px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-sky-600/80 text-[11px] text-slate-200 transition-colors truncate flex items-center gap-1"
+                        >
+                          <span>{c.flag}</span>
+                          <span className="truncate">{c.nameVi}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                    <p className="text-[11px] font-bold text-sky-400 flex items-center gap-1">
+                      <span>↓ Phía Nam/T.Nam</span>
+                    </p>
+                    {['cambodia', 'malaysia', 'singapore', 'indonesia', 'australia'].map(id => {
+                      const c = COUNTRIES_DATA[id];
+                      if (!c) return null;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => handleSelectExploreCountry(c)}
+                          className="w-full text-left px-2 py-1 rounded-lg bg-slate-800/70 hover:bg-sky-600/80 text-[11px] text-slate-200 transition-colors truncate flex items-center gap-1"
+                        >
+                          <span>{c.flag}</span>
+                          <span className="truncate">{c.nameVi}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
@@ -388,7 +487,7 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
                 title="Dành cho giáo viên: Bật/tắt đáp án ngay"
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>{showAnswer ? 'Ẩn đáp án' : '👁 Hiện đáp án'}</span>
+                <span>{showAnswer ? 'Ẩn đáp án' : '👁 Đáp án'}</span>
               </button>
             </div>
 

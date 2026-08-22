@@ -30,6 +30,7 @@ interface WorldMap2DProps {
   flightArc?: FlightArcData | null;
   highlightedCountryIds?: string[];
   targetCountryId?: string | null;
+  mapFocusRequest?: { lat: number; lng: number; altitude?: number; zoom2D?: number; timestamp: number } | null;
   isTeacherMode?: boolean;
   onSelectCountry: (country: CountryData) => void;
   onSelectLandmark?: (landmark: NaturalLandmark) => void;
@@ -59,6 +60,7 @@ export const WorldMap2D: React.FC<WorldMap2DProps> = ({
   flightArc,
   highlightedCountryIds,
   targetCountryId,
+  mapFocusRequest,
   isTeacherMode,
   onSelectCountry,
   onSelectLandmark,
@@ -98,7 +100,8 @@ export const WorldMap2D: React.FC<WorldMap2DProps> = ({
     const fetchGeo = async () => {
       setIsLoading(true);
       try {
-        const localRes = await fetch('/assets/geo/countries.geojson');
+        const geoUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/geo/countries.geojson`;
+        const localRes = await fetch(geoUrl);
         if (localRes.ok) {
           const data = await localRes.json();
           if (isMounted && data && data.features) {
@@ -165,6 +168,13 @@ export const WorldMap2D: React.FC<WorldMap2DProps> = ({
       focusOnCoordinates(selectedCountry.lat, selectedCountry.lng, 2.5);
     }
   }, [selectedCountry?.id, focusOnCoordinates]);
+
+  // Handle external map focus requests (e.g. from learning modules)
+  useEffect(() => {
+    if (mapFocusRequest) {
+      focusOnCoordinates(mapFocusRequest.lat, mapFocusRequest.lng, mapFocusRequest.zoom2D ?? 2.8);
+    }
+  }, [mapFocusRequest, focusOnCoordinates]);
 
   // Helper to match feature to CountryData
   const getCountryFromFeature = useCallback((feature: GeoFeature): CountryData | null => {

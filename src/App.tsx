@@ -68,6 +68,15 @@ export default function App() {
   const [flightArc, setFlightArc] = useState<FlightArcData | null>(null);
   const [activeGameType, setActiveGameType] = useState<GameType | null>(null);
   const [activeLearningActivity, setActiveLearningActivity] = useState<LearningActivity | null>(null);
+  const [learningHighlightedCountryIds, setLearningHighlightedCountryIds] = useState<string[]>([]);
+  const [learningTargetCountryId, setLearningTargetCountryId] = useState<string | null>(null);
+  const [mapFocusRequest, setMapFocusRequest] = useState<{
+    lat: number;
+    lng: number;
+    altitude?: number;
+    zoom2D?: number;
+    timestamp: number;
+  } | null>(null);
   const [currentClickedCountryId, setCurrentClickedCountryId] = useState<string | null>(null);
 
   // Presentation & Teacher Mode States
@@ -114,6 +123,8 @@ export default function App() {
     }
     if (!options?.keepLearning) {
       setActiveLearningActivity(null);
+      setLearningHighlightedCountryIds([]);
+      setLearningTargetCountryId(null);
     }
     if (!options?.keepCompare) {
       setIsCompareOpen(false);
@@ -139,11 +150,13 @@ export default function App() {
     setActiveLandmark(null);
     setActiveWonder(null);
 
-    // 2. Schedule panel reveal near the end of 1500ms fly-to sequence (950ms delay)
-    panelTimerRef.current = setTimeout(() => {
-      setDisplayedPanelCountry(country);
-    }, 950);
-  }, []);
+    // 2. Schedule panel reveal near the end of 1500ms fly-to sequence (950ms delay) - ONLY if not in learning activity
+    if (!activeLearningActivity) {
+      panelTimerRef.current = setTimeout(() => {
+        setDisplayedPanelCountry(country);
+      }, 950);
+    }
+  }, [activeLearningActivity]);
 
   // Close CountryPanel cleanly
   const handleCloseCountryPanel = useCallback(() => {
@@ -168,6 +181,8 @@ export default function App() {
     setLayers(DEFAULT_LAYERS);
     setHideLabels(false);
     setBorderOnlyMode(false);
+    setLearningHighlightedCountryIds([]);
+    setLearningTargetCountryId(null);
   }, [handleSelectCountry, resetTransientUI]);
 
   // 4. View Flight Journey From Vietnam
@@ -251,10 +266,23 @@ export default function App() {
       setActiveLearningActivity(activity);
     } else {
       setActiveLearningActivity(null);
+      setLearningHighlightedCountryIds([]);
+      setLearningTargetCountryId(null);
     }
   }, [resetTransientUI]);
 
-  // 12. Handle Country Click
+  // 12. Set highlights for learning activities
+  const handleSetHighlightCountries = useCallback((countryIds: string[], targetId?: string | null) => {
+    setLearningHighlightedCountryIds(countryIds);
+    setLearningTargetCountryId(targetId ?? null);
+  }, []);
+
+  // 13. Map focus request for 3D Globe & 2D Map
+  const handleFocusRegion = useCallback((lat: number, lng: number, altitude = 1.9, zoom2D = 2.8) => {
+    setMapFocusRequest({ lat, lng, altitude, zoom2D, timestamp: Date.now() });
+  }, []);
+
+  // 14. Handle Country Click
   const handleCountryClick = useCallback((countryId: string, countryObj?: CountryData) => {
     setCurrentClickedCountryId(countryId);
     if (activeGameType) {
@@ -266,7 +294,7 @@ export default function App() {
     }
   }, [activeGameType, handleSelectCountry]);
 
-  const isPanelOpen = displayedPanelCountry !== null && !activeGameType;
+  const isPanelOpen = displayedPanelCountry !== null && !activeGameType && !activeLearningActivity;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans select-none flex">
@@ -323,6 +351,9 @@ export default function App() {
             borderOnlyMode={borderOnlyMode}
             hideLabels={hideLabels}
             onGlobeCountryClick={handleCountryClick}
+            highlightedCountryIds={learningHighlightedCountryIds}
+            targetCountryId={learningTargetCountryId}
+            mapFocusRequest={mapFocusRequest}
           />
         ) : (
           <WorldMap2D
@@ -339,11 +370,14 @@ export default function App() {
             borderOnlyMode={borderOnlyMode}
             hideLabels={hideLabels}
             onMapCountryClick={handleCountryClick}
+            highlightedCountryIds={learningHighlightedCountryIds}
+            targetCountryId={learningTargetCountryId}
+            mapFocusRequest={mapFocusRequest}
           />
         )}
 
-        {/* 3. LAYER TOGGLE CONTROLS (Hidden during Presentation and Game modes) */}
-        {!isPresentationMode && !activeGameType && (
+        {/* 3. LAYER TOGGLE CONTROLS (Hidden during Presentation, Game, and Learning modes) */}
+        {!isPresentationMode && !activeGameType && !activeLearningActivity && (
           <LayerControls layers={layers} setLayers={setLayers} />
         )}
 
@@ -356,13 +390,13 @@ export default function App() {
         />
       </div>
 
-      {/* 5. FLIGHT ARC JOURNEY BANNER (Hidden during game) */}
-      {flightArc && !activeGameType && (
+      {/* 5. FLIGHT ARC JOURNEY BANNER (Hidden during game or learning) */}
+      {flightArc && !activeGameType && !activeLearningActivity && (
         <FlightArcBanner flightArc={flightArc} onClose={() => setFlightArc(null)} />
       )}
 
-      {/* 6. COUNTRY EXPLORATION CARD (Right Side, delayed entrance, hidden during game) */}
-      {displayedPanelCountry && !activeGameType && (
+      {/* 6. COUNTRY EXPLORATION CARD (Right Side, delayed entrance, hidden during game & learning activities) */}
+      {displayedPanelCountry && !activeGameType && !activeLearningActivity && (
         <CountryPanel
           key={displayedPanelCountry.id}
           country={displayedPanelCountry}
@@ -373,8 +407,8 @@ export default function App() {
         />
       )}
 
-      {/* 7. CONTINENT EXPLORER PANEL (Hidden during game) */}
-      {currentMode === 'continents' && !activeGameType && (
+      {/* 7. CONTINENT EXPLORER PANEL (Hidden during game & learning activities) */}
+      {currentMode === 'continents' && !activeGameType && !activeLearningActivity && (
         <ContinentExplorer
           activeContinentId={activeContinentId}
           onSelectContinent={handleSelectContinent}
@@ -382,8 +416,8 @@ export default function App() {
         />
       )}
 
-      {/* 8. NATURE & WONDERS EXPLORER PANEL (Hidden during game) */}
-      {currentMode === 'nature' && !activeGameType && (
+      {/* 8. NATURE & WONDERS EXPLORER PANEL (Hidden during game & learning activities) */}
+      {currentMode === 'nature' && !activeGameType && !activeLearningActivity && (
         <NatureExplorer
           activeLandmark={activeLandmark}
           onSelectLandmark={handleSelectLandmark}
@@ -397,15 +431,20 @@ export default function App() {
       {activeLearningActivity === 'vietnam_neighbors' && (
         <VietnamNeighbors
           onSelectCountry={handleSelectCountry}
-          onClose={() => setActiveLearningActivity(null)}
+          onClose={() => handleStartLearningActivity(null)}
+          onFocusRegion={handleFocusRegion}
+          onSetHighlightCountries={handleSetHighlightCountries}
         />
       )}
 
       {/* 9B. Compass & Direction Finding Learning Panel */}
       {activeLearningActivity === 'direction_finding' && (
         <DirectionLearning
+          selectedCountry={selectedCountry}
           onSelectCountry={handleSelectCountry}
-          onClose={() => setActiveLearningActivity(null)}
+          onClose={() => handleStartLearningActivity(null)}
+          onFocusRegion={handleFocusRegion}
+          onSetHighlightCountries={handleSetHighlightCountries}
         />
       )}
 
@@ -413,9 +452,9 @@ export default function App() {
       {activeLearningActivity === 'hemispheres_equator' && (
         <HemispheresLearning
           onSelectCountry={handleSelectCountry}
-          onClose={() => setActiveLearningActivity(null)}
-          layers={layers}
-          setLayers={setLayers}
+          onClose={() => handleStartLearningActivity(null)}
+          onToggleEquatorLayer={(enabled) => setLayers(prev => ({ ...prev, equator: enabled }))}
+          onFocusRegion={handleFocusRegion}
         />
       )}
 
@@ -465,8 +504,8 @@ export default function App() {
         />
       )}
 
-      {/* 14. GEO MASCOT GUIDE (Hidden during presentation and games) */}
-      {!isPresentationMode && !activeGameType && <GeoMascot />}
+      {/* 14. GEO MASCOT GUIDE (Hidden during presentation, games, and learning activities) */}
+      {!isPresentationMode && !activeGameType && !activeLearningActivity && <GeoMascot />}
 
       {/* 15. BOTTOM MAIN NAVIGATION MENU (Hidden during presentation and games) */}
       {!isPresentationMode && !activeGameType && (

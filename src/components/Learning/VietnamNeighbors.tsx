@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   ShieldCheck, 
@@ -7,20 +7,20 @@ import {
   ArrowRight, 
   Eye, 
   CheckCircle2, 
-  HelpCircle, 
   Sparkles,
   Layers,
   Globe2,
   X
 } from 'lucide-react';
 import { CountryData } from '../../types';
-import { COUNTRIES_DATA } from '../../data/countries';
-import { getDirectionFromVietnam } from '../../utils/geoUtils';
+import { COUNTRIES_DATA, SOUTHEAST_ASIA_COUNTRY_IDS } from '../../data/countries';
+import confetti from 'canvas-confetti';
 
 interface VietnamNeighborsProps {
   onSelectCountry: (country: CountryData) => void;
   onClose: () => void;
-  onFocusRegion?: (lat: number, lng: number, altitude: number) => void;
+  onFocusRegion?: (lat: number, lng: number, altitude: number, zoom2D?: number) => void;
+  onSetHighlightCountries?: (countryIds: string[], targetId?: string | null) => void;
 }
 
 type TabType = 'neighbors' | 'asean' | 'maritime' | 'quiz';
@@ -28,13 +28,13 @@ type TabType = 'neighbors' | 'asean' | 'maritime' | 'quiz';
 export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
   onSelectCountry,
   onClose,
-  onFocusRegion
+  onFocusRegion,
+  onSetHighlightCountries
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('neighbors');
   const [quizStep, setQuizStep] = useState(0);
-  const [selectedQuizOption, setSelectedQuizOption] = useState<string | null>(null);
+  const [selectedQuizOption, setSelectedQuizOption] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [score, setScore] = useState(0);
 
   // 3 Direct land neighbors of Vietnam
   const directNeighbors = [
@@ -42,29 +42,49 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
       countryId: 'china',
       direction: 'Phía Bắc',
       borderLength: '1.449 km',
-      significance: 'Đường biên giới phía Bắc giáp với các tỉnh Quảng Ninh, Lạng Sơn, Cao Bằng, Hà Giang, Lào Cai, Lai Châu, Điện Biên.',
+      significance: 'Biên giới phía Bắc tiếp giáp với 7 tỉnh của Việt Nam (Điện Biên, Lai Châu, Lào Cai, Hà Giang, Cao Bằng, Lạng Sơn, Quảng Ninh).',
       badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40'
     },
     {
       countryId: 'laos',
       direction: 'Phía Tây',
       borderLength: '2.169 km',
-      significance: 'Đường biên giới đất liền dài nhất với Việt Nam, trải dài dọc dãy núi Trường Sơn hùng vĩ qua 10 tỉnh thành.',
+      significance: 'Đường biên giới đất liền dài nhất với nước ta, trải dài dọc dãy núi Trường Sơn hùng vĩ qua 10 tỉnh thành.',
       badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
     },
     {
       countryId: 'cambodia',
       direction: 'Phía Tây Nam',
       borderLength: '1.258 km',
-      significance: 'Đường biên giới phía Tây Nam giáp các tỉnh Tây Nguyên và Tây Nam Bộ, gắn liền với dòng sông Tiền và sông Hậu.',
+      significance: 'Biên giới phía Tây Nam gắn liền với vùng đồng bằng sông Cửu Long màu mỡ và các tỉnh Nam Bộ, Tây Nguyên.',
       badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/40'
     }
   ];
 
-  // 11 ASEAN Countries
-  const aseanCountries = Object.values(COUNTRIES_DATA).filter(
-    (c) => c.isSoutheastAsia || ['vietnam', 'laos', 'cambodia', 'thailand', 'singapore', 'indonesia', 'malaysia', 'philippines', 'myanmar', 'brunei'].includes(c.id)
-  );
+  // 11 Southeast Asian Countries
+  const southeastAsiaList = SOUTHEAST_ASIA_COUNTRY_IDS
+    .map(id => COUNTRIES_DATA[id])
+    .filter((c): c is CountryData => Boolean(c));
+
+  // Sync highlights and camera focus on tab change
+  useEffect(() => {
+    if (activeTab === 'neighbors') {
+      onSetHighlightCountries?.(['vietnam', 'china', 'laos', 'cambodia'], 'vietnam');
+      onFocusRegion?.(16.0, 106.0, 1.9, 3.2);
+    } else if (activeTab === 'asean') {
+      onSetHighlightCountries?.([...SOUTHEAST_ASIA_COUNTRY_IDS], 'vietnam');
+      onFocusRegion?.(12.0, 110.0, 1.8, 2.8);
+    } else if (activeTab === 'maritime') {
+      onSetHighlightCountries?.(['vietnam'], 'vietnam');
+      onFocusRegion?.(15.0, 112.0, 1.85, 3.0);
+    }
+  }, [activeTab, onFocusRegion, onSetHighlightCountries]);
+
+  // Initial focus on mount
+  useEffect(() => {
+    onFocusRegion?.(16.0, 106.0, 1.9, 3.2);
+    onSetHighlightCountries?.(['vietnam', 'china', 'laos', 'cambodia'], 'vietnam');
+  }, [onFocusRegion, onSetHighlightCountries]);
 
   // Elementary Geography Quiz Questions
   const neighborQuiz = [
@@ -90,11 +110,11 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
         'Thái Lan (0 km)'
       ],
       correctIndex: 1,
-      explanation: 'Lào là nước có đường biên giới đất liền dài nhất với Việt Nam, dài khoảng 2.169 km dọc theo dãy Trường Sơn.'
+      explanation: 'Lào là nước có đường biên giới đất liền dài nhất với Việt Nam, dài khoảng 2.169 km dọc theo dải Trường Sơn.'
     },
     {
       id: 'q3',
-      question: 'Ở phía Đông và phía Nam, đất nước Việt Nam tiếp giáp với vùng biển nào?',
+      question: 'Ở phía Đông và phía Nam, phần đất liền Việt Nam tiếp giáp với vùng biển nào?',
       options: [
         'Biển Đông',
         'Biển Nhật Bản',
@@ -102,39 +122,47 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
         'Ấn Độ Dương'
       ],
       correctIndex: 0,
-      explanation: 'Toàn bộ phía Đông và phía Nam của nước ta được bao bọc bởi vùng Biển Đông giàu đẹp với bờ biển dài 3.260 km.'
+      explanation: 'Toàn bộ phía Đông, Nam và Tây Nam nước ta giáp với vùng Biển Đông giàu đẹp với bờ biển dài 3.260 km.'
     },
     {
       id: 'q4',
-      question: 'Nước láng giềng nào nằm ở PHÍA BẮC của Việt Nam?',
+      question: 'Khu vực Đông Nam Á hiện nay bao gồm bao nhiêu quốc gia?',
       options: [
-        'Lào',
-        'Trung Quốc',
-        'Campuchia',
-        'Thái Lan'
+        '9 quốc gia',
+        '10 quốc gia',
+        '11 quốc gia',
+        '12 quốc gia'
       ],
-      correctIndex: 1,
-      explanation: 'Trung Quốc là quốc gia láng giềng rộng lớn nằm ở phía Bắc của Việt Nam.'
+      correctIndex: 2,
+      explanation: 'Đông Nam Á gồm 11 quốc gia: Việt Nam, Lào, Campuchia, Thái Lan, Myanmar, Malaysia, Singapore, Indonesia, Philippines, Brunei và Timor-Leste.'
     }
   ];
 
-  const handleCountryClick = (cId: string) => {
-    const c = COUNTRIES_DATA[cId];
-    if (c) {
-      onSelectCountry(c);
-      if (onFocusRegion) {
-        onFocusRegion(c.lat, c.lng, 1.8);
-      }
-    }
+  const handleCountryClick = (c: CountryData) => {
+    onSelectCountry(c);
+    onSetHighlightCountries?.(['vietnam', c.id], c.id);
+    onFocusRegion?.(c.lat, c.lng, 1.8, 3.2);
   };
 
   const handleFocusSoutheastAsia = () => {
-    if (onFocusRegion) {
-      onFocusRegion(15.0, 105.0, 1.9);
+    onFocusRegion?.(15.0, 105.0, 1.9, 3.2);
+    if (activeTab === 'asean') {
+      onSetHighlightCountries?.([...SOUTHEAST_ASIA_COUNTRY_IDS], 'vietnam');
+    } else {
+      onSetHighlightCountries?.(['vietnam', 'china', 'laos', 'cambodia'], 'vietnam');
     }
   };
 
   const currentQ = neighborQuiz[quizStep];
+
+  const handleQuizAnswer = (index: number) => {
+    setSelectedQuizOption(index);
+    if (index === currentQ.correctIndex) {
+      try {
+        confetti({ particleCount: 35, spread: 55, origin: { y: 0.8 } });
+      } catch {}
+    }
+  };
 
   return (
     <motion.div
@@ -157,7 +185,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
               </span>
             </h3>
             <p className="text-xs text-slate-400">
-              Quan sát vị trí địa lí, ranh giới láng giềng và khu vực Đông Nam Á
+              Vị trí địa lí, các nước láng giềng giáp ranh và khu vực Đông Nam Á
             </p>
           </div>
         </div>
@@ -166,7 +194,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
           <button
             onClick={handleFocusSoutheastAsia}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600/50 text-xs font-medium text-sky-300 transition-colors"
-            title="Đưa góc nhìn về Đông Nam Á"
+            title="Đưa góc nhìn về khu vực Đông Nam Á"
           >
             <Globe2 className="w-3.5 h-3.5" />
             <span>Góc nhìn ĐNA</span>
@@ -243,7 +271,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
             <div className="p-3 rounded-2xl bg-sky-950/30 border border-sky-800/40 text-xs text-sky-200 flex items-center gap-2.5">
               <Compass className="w-5 h-5 text-sky-400 flex-shrink-0" />
               <span>
-                Việt Nam có <strong>3 quốc gia láng giềng giáp biên giới đất liền</strong>. Bấm vào từng nước để tự động định vị trên bản đồ / địa cầu:
+                Việt Nam có <strong>3 quốc gia láng giềng chung đường biên giới đất liền</strong>. Bấm vào từng nước để xem vị trí trên bản đồ / địa cầu:
               </span>
             </div>
 
@@ -255,7 +283,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
                 return (
                   <div
                     key={item.countryId}
-                    onClick={() => handleCountryClick(item.countryId)}
+                    onClick={() => handleCountryClick(country)}
                     className="p-3.5 rounded-2xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 hover:border-sky-500/60 transition-all cursor-pointer group flex flex-col justify-between"
                   >
                     <div>
@@ -280,7 +308,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
                     </div>
 
                     <div className="mt-3 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[11px] text-sky-400 group-hover:translate-x-0.5 transition-transform">
-                      <span>Xem chi tiết</span>
+                      <span>Định vị trên bản đồ</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
@@ -290,44 +318,36 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
           </div>
         )}
 
-        {/* Tab 2: 11 ASEAN Countries */}
+        {/* Tab 2: 11 Southeast Asian Countries */}
         {activeTab === 'asean' && (
           <div className="space-y-3">
-            <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/50 text-xs text-slate-300 flex items-center justify-between">
-              <span>Hiệp hội các quốc gia Đông Nam Á (ASEAN) gồm <strong>11 nước thành viên</strong>:</span>
+            <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/50 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <span>Khu vực Đông Nam Á gồm <strong>11 quốc gia</strong> (10 thành viên chính thức của ASEAN và Timor-Leste):</span>
+              <span className="text-[11px] text-amber-300">💡 Bấm vào nước để quan sát</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
-              {aseanCountries.map((c) => {
-                const dirInfo = getDirectionFromVietnam(c);
-                const isVN = c.id === 'vietnam';
-
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => handleCountryClick(c.id)}
-                    className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                      isVN
-                        ? 'bg-red-950/40 border-red-500/50 hover:bg-red-900/50'
-                        : 'bg-slate-800/60 border-slate-700/50 hover:border-sky-500/50 hover:bg-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{c.flag}</span>
-                      <div>
-                        <p className="font-bold text-xs text-white leading-tight">{c.nameVi}</p>
-                        <p className="text-[10px] text-slate-400">{c.capital}</p>
-                      </div>
-                    </div>
-                    {!isVN && (
-                      <span className="text-[10px] text-sky-300/80 mt-1.5 flex items-center gap-1 font-medium">
-                        <span>{dirInfo.arrow}</span>
-                        <span className="truncate">{c.relativeDirectionFromVietnam || 'ĐNA'}</span>
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+              {southeastAsiaList.map((c) => (
+                <div
+                  key={c.id}
+                  onClick={() => handleCountryClick(c)}
+                  className={`p-2.5 rounded-xl border transition-all cursor-pointer group flex items-center gap-2.5 ${
+                    c.id === 'vietnam'
+                      ? 'bg-red-950/40 border-red-500/50 hover:bg-red-900/50'
+                      : 'bg-slate-800/70 border-slate-700/60 hover:border-sky-500 hover:bg-slate-800'
+                  }`}
+                >
+                  <span className="text-2xl shrink-0">{c.flag}</span>
+                  <div className="min-w-0 flex-1">
+                    <h5 className="font-bold text-xs text-white truncate group-hover:text-sky-300">
+                      {c.nameVi.replace(' (Đông Timor)', '')}
+                    </h5>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {c.capital}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -335,47 +355,28 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
         {/* Tab 3: Maritime & Islands */}
         {activeTab === 'maritime' && (
           <div className="space-y-3 text-xs text-slate-300">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-2xl bg-slate-800/70 border border-slate-700/60">
-                <h4 className="font-bold text-sm text-sky-300 mb-1.5 flex items-center gap-1.5">
-                  🌊 Vùng Biển Đông Rộng Lớn
-                </h4>
-                <p className="leading-relaxed text-slate-300">
-                  Biển Đông bao bọc toàn bộ phía Đông và Nam nước ta, cung cấp nguồn hải sản trù phú, dầu khí và là tuyến giao thương hàng hải huyết mạch quốc tế.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-800/70 border border-slate-700/60">
-                <h4 className="font-bold text-sm text-amber-300 mb-1.5 flex items-center gap-1.5">
-                  🏝 Hai Quần Đảo Thiêng Liêng
-                </h4>
-                <p className="leading-relaxed text-slate-300">
-                  Quần đảo <strong>Hoàng Sa</strong> (thuộc TP. Đà Nẵng) và Quần đảo <strong>Trường Sa</strong> (thuộc tỉnh Khánh Hòa) là một phần máu thịt thiêng liêng không thể tách rời của Tổ quốc.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-800/70 border border-slate-700/60">
-                <h4 className="font-bold text-sm text-emerald-300 mb-1.5">
-                  🌅 Vịnh Bắc Bộ
-                </h4>
-                <p className="leading-relaxed text-slate-300">
-                  Vùng vịnh ở phía Bắc với Di sản Thiên nhiên Thế giới <strong>Vịnh Hạ Long</strong> và hàng ngàn đảo ngọc đá vôi kỳ thú.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-800/70 border border-slate-700/60">
-                <h4 className="font-bold text-sm text-purple-300 mb-1.5">
-                  🏖 Vịnh Thái Lan & Đảo Phú Quốc
-                </h4>
-                <p className="leading-relaxed text-slate-300">
-                  Nằm ở phía Tây Nam với Đảo Ngọc Phú Quốc lớn nhất Việt Nam, khí hậu ấm áp và biển lặng quanh năm.
-                </p>
+            <div className="p-3.5 rounded-2xl bg-sky-950/40 border border-sky-800/50 space-y-2">
+              <h4 className="font-bold text-sm text-sky-300 flex items-center gap-2">
+                🌊 Vùng Biển Đông & Các Quần Đảo Thiêng Liêng
+              </h4>
+              <p className="leading-relaxed">
+                Biển Đông là vùng biển rộng lớn bao bọc toàn bộ phía Đông và Nam lãnh thổ nước ta. Bờ biển Việt Nam uốn cong hình chữ S dài <strong>3.260 km</strong>, có hàng nghìn hòn đảo lớn nhỏ.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700">
+                  <p className="font-bold text-amber-300">Quần đảo Hoàng Sa</p>
+                  <p className="text-[11px] text-slate-300 mt-0.5">Thuộc huyện đảo Hoàng Sa, thành phố Đà Nẵng.</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700">
+                  <p className="font-bold text-amber-300">Quần đảo Trường Sa</p>
+                  <p className="text-[11px] text-slate-300 mt-0.5">Thuộc huyện đảo Trường Sa, tỉnh Khánh Hòa.</p>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 4: Interactive Quick Quiz */}
+        {/* Tab 4: Quiz */}
         {activeTab === 'quiz' && (
           <div className="p-4 rounded-2xl bg-slate-800/80 border border-amber-500/30">
             <div className="flex items-center justify-between mb-3">
@@ -388,7 +389,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
                 title="Dành cho giáo viên: Bật/tắt đáp án ngay"
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>{showAnswer ? 'Ẩn đáp án' : '👁 Hiện đáp án'}</span>
+                <span>{showAnswer ? 'Ẩn đáp án' : '👁 Đáp án'}</span>
               </button>
             </div>
 
@@ -396,31 +397,28 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
               {currentQ.question}
             </h4>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {currentQ.options.map((opt, idx) => {
-                const isSelected = selectedQuizOption === opt;
+                const isSelected = selectedQuizOption === idx;
                 const isCorrect = idx === currentQ.correctIndex;
-                let btnStyle = 'bg-slate-900/60 border-slate-700 text-slate-200 hover:border-slate-500';
+                let style = 'bg-slate-900/60 border-slate-700 text-slate-200 hover:border-slate-500';
 
                 if (showAnswer) {
-                  if (isCorrect) btnStyle = 'bg-emerald-900/60 border-emerald-500 text-emerald-200 font-bold';
+                  if (isCorrect) style = 'bg-emerald-900/60 border-emerald-500 text-emerald-200 font-bold';
                 } else if (isSelected) {
-                  if (isCorrect) btnStyle = 'bg-emerald-900/60 border-emerald-500 text-emerald-200 font-bold';
-                  else btnStyle = 'bg-red-900/60 border-red-500 text-red-200';
+                  if (isCorrect) style = 'bg-emerald-900/60 border-emerald-500 text-emerald-200 font-bold';
+                  else style = 'bg-red-900/60 border-red-500 text-red-200';
                 }
 
                 return (
                   <button
                     key={idx}
-                    onClick={() => {
-                      setSelectedQuizOption(opt);
-                      if (isCorrect) setScore(s => s + 1);
-                    }}
-                    className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all flex items-center justify-between ${btnStyle}`}
+                    onClick={() => handleQuizAnswer(idx)}
+                    className={`p-2.5 rounded-xl border text-xs text-left transition-all flex items-center justify-between ${style}`}
                   >
                     <span>{opt}</span>
                     {(showAnswer || (isSelected && isCorrect)) && isCorrect && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     )}
                   </button>
                 );
@@ -437,7 +435,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
               <button
                 disabled={quizStep === 0}
                 onClick={() => {
-                  setQuizStep(s => Math.max(0, s - 1));
+                  setQuizStep(i => Math.max(0, i - 1));
                   setSelectedQuizOption(null);
                   setShowAnswer(false);
                 }}
@@ -449,7 +447,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
               <button
                 onClick={() => {
                   if (quizStep < neighborQuiz.length - 1) {
-                    setQuizStep(s => s + 1);
+                    setQuizStep(i => i + 1);
                     setSelectedQuizOption(null);
                     setShowAnswer(false);
                   } else {
@@ -458,9 +456,9 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
                     setShowAnswer(false);
                   }
                 }}
-                className="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-xs font-bold text-white shadow-md shadow-sky-500/30"
+                className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-bold text-slate-950 shadow-md shadow-amber-500/30"
               >
-                {quizStep < neighborQuiz.length - 1 ? 'Câu tiếp theo →' : 'Làm lại từ đầu'}
+                {quizStep < neighborQuiz.length - 1 ? 'Câu tiếp theo →' : 'Làm lại'}
               </button>
             </div>
           </div>

@@ -1014,6 +1014,26 @@ export const COUNTRIES_DATA: Record<string, CountryData> = {
   ...EXTENDED_COUNTRIES_DATA_2
 };
 
+export const SOUTHEAST_ASIA_COUNTRY_IDS = [
+  'vietnam',
+  'laos',
+  'cambodia',
+  'thailand',
+  'myanmar',
+  'malaysia',
+  'singapore',
+  'indonesia',
+  'philippines',
+  'brunei',
+  'timor_leste'
+] as const;
+
+export const VIETNAM_DIRECT_NEIGHBOR_IDS = [
+  'china',
+  'laos',
+  'cambodia'
+] as const;
+
 export const DEFAULT_COUNTRY_DATA: CountryData = {
   id: 'unknown',
   code: 'UN',
