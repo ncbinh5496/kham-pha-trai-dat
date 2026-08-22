@@ -19,6 +19,7 @@ interface HemispheresLearningProps {
   onSelectCountry: (country: CountryData) => void;
   onClose: () => void;
   onToggleEquatorLayer?: (enabled: boolean) => void;
+  onFocusRegion?: (lat: number, lng: number, altitude: number, zoom2D?: number) => void;
 }
 
 interface PracticeItem {
@@ -30,7 +31,8 @@ interface PracticeItem {
 export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
   onSelectCountry,
   onClose,
-  onToggleEquatorLayer
+  onToggleEquatorLayer,
+  onFocusRegion
 }) => {
   const [activeTab, setActiveTab] = useState<'concepts' | 'practice' | 'trivia'>('concepts');
   const [practiceIndex, setPracticeIndex] = useState(0);
@@ -99,6 +101,9 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
   const handleViewOnMap = () => {
     if (currentCountryObj) {
       onSelectCountry(currentCountryObj);
+      onFocusRegion?.(currentCountryObj.lat, currentCountryObj.lng, 1.85, 3.0);
+      // Ensure Equator layer remains active for equator crossing countries like Brazil/Indonesia
+      onToggleEquatorLayer?.(true);
     }
   };
 

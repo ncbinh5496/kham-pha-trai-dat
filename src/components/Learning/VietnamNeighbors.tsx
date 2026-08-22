@@ -66,7 +66,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
     .map(id => COUNTRIES_DATA[id])
     .filter((c): c is CountryData => Boolean(c));
 
-  // Sync highlights and camera focus on tab change
+  // Sync highlights and camera focus on tab change (also runs on mount with initial tab 'neighbors')
   useEffect(() => {
     if (activeTab === 'neighbors') {
       onSetHighlightCountries?.(['vietnam', 'china', 'laos', 'cambodia'], 'vietnam');
@@ -79,12 +79,6 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
       onFocusRegion?.(15.0, 112.0, 1.85, 3.0);
     }
   }, [activeTab, onFocusRegion, onSetHighlightCountries]);
-
-  // Initial focus on mount
-  useEffect(() => {
-    onFocusRegion?.(16.0, 106.0, 1.9, 3.2);
-    onSetHighlightCountries?.(['vietnam', 'china', 'laos', 'cambodia'], 'vietnam');
-  }, [onFocusRegion, onSetHighlightCountries]);
 
   // Elementary Geography Quiz Questions
   const neighborQuiz = [

@@ -331,7 +331,7 @@ export default function App() {
         id="main-viewport-container"
         className={`relative h-full transition-all duration-500 ease-out ${
           isPanelOpen && !isPresentationMode
-            ? 'w-full md:w-[calc(100%-380px)] lg:w-[calc(100%-400px)]'
+            ? 'w-full md:w-[calc(100%_-_380px)] lg:w-[calc(100%_-_400px)]'
             : 'w-full'
         }`}
       >
@@ -507,8 +507,8 @@ export default function App() {
       {/* 14. GEO MASCOT GUIDE (Hidden during presentation, games, and learning activities) */}
       {!isPresentationMode && !activeGameType && !activeLearningActivity && <GeoMascot />}
 
-      {/* 15. BOTTOM MAIN NAVIGATION MENU (Hidden during presentation and games) */}
-      {!isPresentationMode && !activeGameType && (
+      {/* 15. BOTTOM MAIN NAVIGATION MENU (Hidden during presentation, games, and learning activities) */}
+      {!isPresentationMode && !activeGameType && !activeLearningActivity && (
         <MainMenu
           currentMode={currentMode}
           setAppMode={handleSetAppMode}
