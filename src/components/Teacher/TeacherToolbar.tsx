@@ -10,14 +10,11 @@ import {
   Globe2,
   HelpCircle,
   RotateCcw,
-  Scale,
   X,
   ChevronRight,
   Lightbulb,
   MapPin,
   Compass,
-  ShieldCheck,
-  Sparkles,
   Sliders
 } from 'lucide-react';
 
@@ -32,7 +29,7 @@ interface TeacherToolbarProps {
   setLayers: React.Dispatch<React.SetStateAction<LayerConfig>>;
   onHighlightContinent: (continentId: string | null) => void;
   onResetGlobe: () => void;
-  onOpenCompare: () => void;
+  onOpenCompare?: () => void;
   onOpenLearningActivity?: (activity: LearningActivity) => void;
   isPresentationMode?: boolean;
 }
@@ -48,7 +45,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
   setLayers,
   onHighlightContinent,
   onResetGlobe,
-  onOpenCompare,
+  onOpenCompare: _onOpenCompare,
   onOpenLearningActivity,
   isPresentationMode = false
 }) => {
@@ -289,7 +286,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
 
         {/* Pedagogical Topic Quick Starters */}
         <div>
-          <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-2">
+          <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">
             ⚡ Hoạt Động Giảng Dạy Trọng Tâm
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -301,7 +298,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
                 <span className="text-xl">🇻🇳</span>
                 <span className="font-bold text-xs text-white group-hover:text-red-300">Việt Nam & Láng Giềng</span>
               </div>
-              <p className="text-[10px] text-slate-400">3 nước giáp biên & Đông Nam Á</p>
+              <p className="text-xs text-slate-300/90">3 nước giáp biên & Đông Nam Á</p>
             </button>
 
             <button
@@ -312,7 +309,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
                 <Compass className="w-5 h-5 text-sky-400" />
                 <span className="font-bold text-xs text-white group-hover:text-sky-300">Phương Hướng Bản Đồ</span>
               </div>
-              <p className="text-[10px] text-slate-400">4 hướng chính & góc so với VN</p>
+              <p className="text-xs text-slate-300/90">4 hướng chính & góc so với VN</p>
             </button>
 
             <button
@@ -323,7 +320,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
                 <Globe2 className="w-5 h-5 text-amber-400" />
                 <span className="font-bold text-xs text-white group-hover:text-amber-300">Bắc & Nam Bán Cầu</span>
               </div>
-              <p className="text-[10px] text-slate-400">Đường Xích đạo & sự đối lập mùa</p>
+              <p className="text-xs text-slate-300/90">Đường Xích đạo & sự đối lập mùa</p>
             </button>
           </div>
         </div>
@@ -341,7 +338,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
           >
             {hideLabels ? <EyeOff className="w-5 h-5 mb-1.5 text-amber-400" /> : <Eye className="w-5 h-5 mb-1.5 text-cyan-400" />}
             <span className="text-xs font-bold">{hideLabels ? 'Đang Ẩn Tên' : 'Ẩn Tên Quốc Gia'}</span>
-            <span className="text-[10px] text-slate-400">Để học sinh tự đoán</span>
+            <span className="text-xs text-slate-400">Để học sinh tự đoán</span>
           </button>
 
           {/* 2. Border-Only Mode */}
@@ -355,7 +352,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
           >
             <Square className="w-5 h-5 mb-1.5 text-indigo-400" />
             <span className="text-xs font-bold">{borderOnlyMode ? 'Bản Đồ Câm' : 'Bật Bản Đồ Câm'}</span>
-            <span className="text-[10px] text-slate-400">Chỉ hiển thị ranh giới</span>
+            <span className="text-xs text-slate-400">Chỉ hiển thị ranh giới</span>
           </button>
 
           {/* 3. Lưới Kinh - Vĩ tuyến */}
@@ -369,7 +366,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
           >
             <Globe2 className="w-5 h-5 mb-1.5 text-sky-400" />
             <span className="text-xs font-bold">{layers.graticules ? 'Tắt Lưới Tọa Độ' : 'Bật Lưới Tọa Độ'}</span>
-            <span className="text-[10px] text-slate-400">Kinh – vĩ tuyến</span>
+            <span className="text-xs text-slate-400">Kinh – vĩ tuyến</span>
           </button>
 
           {/* 4. Reset Globe State */}
@@ -379,7 +376,7 @@ export const TeacherToolbar: React.FC<TeacherToolbarProps> = ({
           >
             <RotateCcw className="w-5 h-5 mb-1.5 text-rose-400" />
             <span className="text-xs font-bold">Đặt Lại Toàn Bộ</span>
-            <span className="text-[10px] text-slate-400">Về vị trí Việt Nam</span>
+            <span className="text-xs text-slate-400">Về vị trí Việt Nam</span>
           </button>
         </div>
 

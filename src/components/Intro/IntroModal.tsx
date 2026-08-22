@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe2, Sparkles, MapPin, Compass, Play, Trophy, GraduationCap, X } from 'lucide-react';
+import { Globe2, Play, X } from 'lucide-react';
 
 interface IntroModalProps {
   isOpen: boolean;

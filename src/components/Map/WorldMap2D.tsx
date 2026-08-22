@@ -5,17 +5,12 @@ import {
   ZoomIn, 
   ZoomOut, 
   RotateCcw, 
-  Compass, 
-  Info, 
-  MapPin, 
-  Layers, 
-  Eye, 
-  Sparkles,
-  Maximize2
+  Info,
+  Sparkles
 } from 'lucide-react';
-import { CountryData, LayerConfig, NaturalLandmark, WonderRecord, FlightArcData } from '../../types';
+import { CountryData, LayerConfig, NaturalLandmark, WonderRecord, FlightArcData, MapFocusRequest } from '../../types';
 import { COUNTRIES_DATA } from '../../data/countries';
-import { matchCountryData, VIETNAM_COORDINATES, calculateDistanceKm, getRelativeDirection } from '../../utils/geoUtils';
+import { matchCountryData, VIETNAM_COORDINATES } from '../../utils/geoUtils';
 import { NATURAL_LANDMARKS } from '../../data/nature';
 import { getGeoJSON } from '../../services/geoData';
 
@@ -31,7 +26,7 @@ interface WorldMap2DProps {
   flightArc?: FlightArcData | null;
   highlightedCountryIds?: string[];
   targetCountryId?: string | null;
-  mapFocusRequest?: { lat: number; lng: number; altitude?: number; zoom2D?: number; timestamp: number } | null;
+  mapFocusRequest?: MapFocusRequest | null;
   isTeacherMode?: boolean;
   onSelectCountry: (country: CountryData) => void;
   onSelectLandmark?: (landmark: NaturalLandmark) => void;
@@ -57,12 +52,12 @@ export const WorldMap2D: React.FC<WorldMap2DProps> = ({
   hideLabels,
   layers,
   activeLandmark,
-  activeWonder,
+  activeWonder: _activeWonder,
   flightArc,
   highlightedCountryIds,
   targetCountryId,
   mapFocusRequest,
-  isTeacherMode,
+  isTeacherMode: _isTeacherMode,
   onSelectCountry,
   onSelectLandmark,
   setHoveredCountry,
@@ -78,7 +73,6 @@ export const WorldMap2D: React.FC<WorldMap2DProps> = ({
   const isDraggingRef = useRef(false);
   const startPanRef = useRef({ x: 0, y: 0 });
   const [showPedagogyInfo, setShowPedagogyInfo] = useState(false);
-  const [compassBearing, setCompassBearing] = useState<number | null>(null);
 
   // Resize observer to fill container responsively
   useEffect(() => {
@@ -568,13 +562,6 @@ export const WorldMap2D: React.FC<WorldMap2DProps> = ({
               {(() => {
                 const targetPoint = projection([selectedCountry.lng, selectedCountry.lat]);
                 if (!targetPoint) return null;
-                const calc = getRelativeDirection(
-                  VIETNAM_COORDINATES.lat,
-                  VIETNAM_COORDINATES.lng,
-                  selectedCountry.lat,
-                  selectedCountry.lng,
-                  '8_ordinal'
-                );
 
                 return (
                   <>

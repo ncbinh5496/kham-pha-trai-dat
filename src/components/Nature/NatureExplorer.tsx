@@ -11,7 +11,6 @@ import {
   Sparkles,
   X,
   MapPin,
-  HelpCircle,
   CheckCircle2,
   ChevronRight
 } from 'lucide-react';

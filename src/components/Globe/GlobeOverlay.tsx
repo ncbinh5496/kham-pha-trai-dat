@@ -5,14 +5,14 @@ import { CountryData } from '../../types';
 interface GlobeOverlayProps {
   onReturnToVietnam: () => void;
   onResetView: () => void;
-  selectedCountry: CountryData | null;
+  selectedCountry?: CountryData | null;
   isPresentationMode?: boolean;
 }
 
 export const GlobeOverlay: React.FC<GlobeOverlayProps> = ({
   onReturnToVietnam,
   onResetView,
-  selectedCountry,
+  selectedCountry: _selectedCountry,
   isPresentationMode = false
 }) => {
   return (

@@ -5,13 +5,8 @@ import { calculateDistanceKm, formatNumberVi, matchCountryData } from '../../uti
 import {
   Scale,
   X,
-  MapPin,
   Users,
   Maximize2,
-  Languages,
-  SunMedium,
-  Coins,
-  Compass,
   ArrowRightLeft
 } from 'lucide-react';
 
@@ -24,7 +19,7 @@ interface CountryComparisonProps {
 export const CountryComparison: React.FC<CountryComparisonProps> = ({
   initialCountryA,
   onClose,
-  onSelectCountryForGlobe
+  onSelectCountryForGlobe: _onSelectCountryForGlobe
 }) => {
   const allCountries = Object.values(COUNTRIES_DATA);
   const [countryAId, setCountryAId] = useState<string>(initialCountryA?.id || 'vietnam');

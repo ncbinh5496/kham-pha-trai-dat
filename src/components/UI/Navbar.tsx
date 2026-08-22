@@ -1,7 +1,7 @@
 import React from 'react';
 import { SearchBar } from './SearchBar';
 import { CountryData, MapViewMode } from '../../types';
-import { Globe2, GraduationCap, Maximize2, Sparkles, HelpCircle, Map } from 'lucide-react';
+import { Globe2, GraduationCap, Maximize2 } from 'lucide-react';
 
 interface NavbarProps {
   onSelectCountry: (country: CountryData) => void;

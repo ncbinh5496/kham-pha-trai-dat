@@ -6,7 +6,8 @@ import {
   LayerConfig,
   NaturalLandmark,
   WonderRecord,
-  FlightArcData
+  FlightArcData,
+  MapFocusRequest
 } from '../../types';
 import { COUNTRIES_DATA } from '../../data/countries';
 import { CONTINENTS_DATA } from '../../data/continents';
@@ -36,7 +37,7 @@ interface GlobeSceneProps {
   onGlobeCountryClick?: (countryId: string, countryObj?: CountryData) => void;
   highlightedCountryIds?: string[];
   targetCountryId?: string | null;
-  mapFocusRequest?: { lat: number; lng: number; altitude?: number; zoom2D?: number; timestamp: number } | null;
+  mapFocusRequest?: MapFocusRequest | null;
 }
 
 // Global cached ThreeJS sprites to avoid regenerating canvas textures on every frame

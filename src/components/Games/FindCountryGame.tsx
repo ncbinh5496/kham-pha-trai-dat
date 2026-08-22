@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   AlertCircle,
   RotateCcw,
-  Sparkles,
   ArrowRight,
   X
 } from 'lucide-react';

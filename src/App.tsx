@@ -12,6 +12,7 @@ import {
 } from './types';
 import { COUNTRIES_DATA } from './data/countries';
 import { createVietnamFlightArc, matchCountryData } from './utils/geoUtils';
+import { useLearningMapState } from './hooks/useLearningMapState';
 
 // Components
 import { GlobeScene } from './components/Globe/GlobeScene';
@@ -67,16 +68,19 @@ export default function App() {
   const [activeWonder, setActiveWonder] = useState<WonderRecord | null>(null);
   const [flightArc, setFlightArc] = useState<FlightArcData | null>(null);
   const [activeGameType, setActiveGameType] = useState<GameType | null>(null);
-  const [activeLearningActivity, setActiveLearningActivity] = useState<LearningActivity | null>(null);
-  const [learningHighlightedCountryIds, setLearningHighlightedCountryIds] = useState<string[]>([]);
-  const [learningTargetCountryId, setLearningTargetCountryId] = useState<string | null>(null);
-  const [mapFocusRequest, setMapFocusRequest] = useState<{
-    lat: number;
-    lng: number;
-    altitude?: number;
-    zoom2D?: number;
-    timestamp: number;
-  } | null>(null);
+
+  // Hook-based Learning Map State
+  const {
+    activeLearningActivity,
+    learningHighlightedCountryIds,
+    learningTargetCountryId,
+    mapFocusRequest,
+    startLearningActivity,
+    setLearningHighlights,
+    focusLearningRegion,
+    resetLearningState
+  } = useLearningMapState();
+
   const [currentClickedCountryId, setCurrentClickedCountryId] = useState<string | null>(null);
 
   // Presentation & Teacher Mode States
@@ -122,15 +126,13 @@ export default function App() {
       setCurrentClickedCountryId(null);
     }
     if (!options?.keepLearning) {
-      setActiveLearningActivity(null);
-      setLearningHighlightedCountryIds([]);
-      setLearningTargetCountryId(null);
+      resetLearningState();
     }
     if (!options?.keepCompare) {
       setIsCompareOpen(false);
     }
     setFlightArc(null);
-  }, []);
+  }, [resetLearningState]);
 
   // 1. Select Country Handler with smooth camera fly-to & delayed CountryPanel reveal (~950ms)
   const handleSelectCountry = useCallback((country: CountryData | null) => {
@@ -181,9 +183,8 @@ export default function App() {
     setLayers(DEFAULT_LAYERS);
     setHideLabels(false);
     setBorderOnlyMode(false);
-    setLearningHighlightedCountryIds([]);
-    setLearningTargetCountryId(null);
-  }, [handleSelectCountry, resetTransientUI]);
+    resetLearningState();
+  }, [handleSelectCountry, resetTransientUI, resetLearningState]);
 
   // 4. View Flight Journey From Vietnam
   const handleViewFromVietnam = useCallback((targetCountry: CountryData) => {
@@ -263,26 +264,13 @@ export default function App() {
   const handleStartLearningActivity = useCallback((activity: LearningActivity | null) => {
     if (activity) {
       resetTransientUI({ keepLearning: true });
-      setActiveLearningActivity(activity);
+      startLearningActivity(activity);
     } else {
-      setActiveLearningActivity(null);
-      setLearningHighlightedCountryIds([]);
-      setLearningTargetCountryId(null);
+      resetLearningState();
     }
-  }, [resetTransientUI]);
+  }, [resetTransientUI, startLearningActivity, resetLearningState]);
 
-  // 12. Set highlights for learning activities
-  const handleSetHighlightCountries = useCallback((countryIds: string[], targetId?: string | null) => {
-    setLearningHighlightedCountryIds(countryIds);
-    setLearningTargetCountryId(targetId ?? null);
-  }, []);
-
-  // 13. Map focus request for 3D Globe & 2D Map
-  const handleFocusRegion = useCallback((lat: number, lng: number, altitude = 1.9, zoom2D = 2.8) => {
-    setMapFocusRequest({ lat, lng, altitude, zoom2D, timestamp: Date.now() });
-  }, []);
-
-  // 14. Handle Country Click
+  // 12. Handle Country Click
   const handleCountryClick = useCallback((countryId: string, countryObj?: CountryData) => {
     setCurrentClickedCountryId(countryId);
     if (activeGameType) {
@@ -432,8 +420,8 @@ export default function App() {
         <VietnamNeighbors
           onSelectCountry={handleSelectCountry}
           onClose={() => handleStartLearningActivity(null)}
-          onFocusRegion={handleFocusRegion}
-          onSetHighlightCountries={handleSetHighlightCountries}
+          onFocusRegion={focusLearningRegion}
+          onSetHighlightCountries={setLearningHighlights}
         />
       )}
 
@@ -443,8 +431,8 @@ export default function App() {
           selectedCountry={selectedCountry}
           onSelectCountry={handleSelectCountry}
           onClose={() => handleStartLearningActivity(null)}
-          onFocusRegion={handleFocusRegion}
-          onSetHighlightCountries={handleSetHighlightCountries}
+          onFocusRegion={focusLearningRegion}
+          onSetHighlightCountries={setLearningHighlights}
         />
       )}
 
@@ -454,7 +442,7 @@ export default function App() {
           onSelectCountry={handleSelectCountry}
           onClose={() => handleStartLearningActivity(null)}
           onToggleEquatorLayer={(enabled) => setLayers(prev => ({ ...prev, equator: enabled }))}
-          onFocusRegion={handleFocusRegion}
+          onFocusRegion={focusLearningRegion}
         />
       )}
 

@@ -5,15 +5,8 @@ import {
   X,
   Plane,
   Scale,
-  Sparkles,
-  MapPin,
-  Users,
-  Globe2,
   ChevronDown,
-  ChevronUp,
-  Landmark,
-  Compass,
-  Utensils
+  ChevronUp
 } from 'lucide-react';
 
 interface CountryPanelProps {

@@ -6,8 +6,7 @@ import {
   CheckCircle2, 
   Sparkles, 
   X,
-  Target,
-  MapPin
+  Target
 } from 'lucide-react';
 import { CountryData, DirectionQuizMode } from '../../types';
 import { COUNTRIES_DATA } from '../../data/countries';

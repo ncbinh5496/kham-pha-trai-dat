@@ -2,7 +2,7 @@ import React from 'react';
 import { ContinentData, CountryData } from '../../types';
 import { CONTINENTS_DATA } from '../../data/continents';
 import { COUNTRIES_DATA } from '../../data/countries';
-import { Globe, Users, Maximize2, Flag, Sparkles, X, ChevronRight } from 'lucide-react';
+import { Flag, Sparkles, X, ChevronRight } from 'lucide-react';
 
 interface ContinentExplorerProps {
   activeContinentId: string | null;
