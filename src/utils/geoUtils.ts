@@ -1,12 +1,9 @@
 // Geographic mathematical calculations, name resolution and world country mapping
-import { COUNTRIES_DATA, DEFAULT_COUNTRY_DATA } from '../data/countries';
+import { COUNTRIES_DATA, DEFAULT_COUNTRY_DATA, VIETNAM_COORDINATES, DEFAULT_VIETNAM_CAMERA_ALTITUDE } from '../data/countries';
 import { CountryData, FlightArcData } from '../types';
+import { GeoFeature } from '../data/geoJsonData';
 
-export const VIETNAM_COORDINATES = {
-  lat: 14.0583,
-  lng: 108.2772,
-  altitude: 2.1
-};
+export { VIETNAM_COORDINATES, DEFAULT_VIETNAM_CAMERA_ALTITUDE };
 
 /**
  * Calculates the great-circle distance between two points on the Earth's surface in kilometers using the Haversine formula.
@@ -814,6 +811,35 @@ export const WORLD_COUNTRIES_CATALOG: Record<string, WorldCountryInfo> = {
   antarctica: { nameVi: 'Châu Nam Cực (Antarctica)', nameEn: 'Antarctica', capitalVi: 'Trạm nghiên cứu Quốc tế', continentVi: 'Châu Nam Cực', continentId: 'antarctica', iso2: 'AQ', flag: '🇦🇶' }
 };
 
+// Module-level lookup indices for O(1) matching performance
+const COUNTRY_BY_CODE = new Map<string, CountryData>();
+const COUNTRY_BY_NORM_NAME = new Map<string, CountryData>();
+const NORMALIZED_ALIASES = new Map<string, string>();
+const CATALOG_BY_NORM = new Map<string, string>();
+
+for (const country of Object.values(COUNTRIES_DATA)) {
+  COUNTRY_BY_CODE.set(country.code.toLowerCase(), country);
+  COUNTRY_BY_NORM_NAME.set(normalizeGeoString(country.nameVi), country);
+  COUNTRY_BY_NORM_NAME.set(normalizeGeoString(country.nameEn), country);
+  COUNTRY_BY_NORM_NAME.set(country.nameVi.toLowerCase(), country);
+  COUNTRY_BY_NORM_NAME.set(country.nameEn.toLowerCase(), country);
+}
+
+for (const [alias, targetId] of Object.entries(COUNTRY_ALIASES)) {
+  NORMALIZED_ALIASES.set(alias.toLowerCase(), targetId);
+  NORMALIZED_ALIASES.set(normalizeGeoString(alias), targetId);
+}
+
+for (const [catKey, catInfo] of Object.entries(WORLD_COUNTRIES_CATALOG)) {
+  CATALOG_BY_NORM.set(catKey.toLowerCase(), catKey);
+  CATALOG_BY_NORM.set(normalizeGeoString(catKey), catKey);
+  CATALOG_BY_NORM.set(catInfo.iso2.toLowerCase(), catKey);
+  CATALOG_BY_NORM.set(normalizeGeoString(catInfo.nameVi), catKey);
+  CATALOG_BY_NORM.set(normalizeGeoString(catInfo.nameEn), catKey);
+  CATALOG_BY_NORM.set(catInfo.nameVi.toLowerCase(), catKey);
+  CATALOG_BY_NORM.set(catInfo.nameEn.toLowerCase(), catKey);
+}
+
 /**
  * Resolves a natural earth or external GeoFeature into a clean country id key
  */
@@ -829,16 +855,16 @@ export function resolveCountryKey(input: string): string | undefined {
   if (COUNTRIES_DATA[lower]) return lower;
   if (COUNTRIES_DATA[normalized]) return normalized;
 
-  // 2. Direct match in COUNTRY_ALIASES
-  if (COUNTRY_ALIASES[lower]) return COUNTRY_ALIASES[lower];
-  if (COUNTRY_ALIASES[normalized]) return COUNTRY_ALIASES[normalized];
+  // 2. Direct match in pre-indexed aliases
+  const aliasMatch = NORMALIZED_ALIASES.get(lower) || NORMALIZED_ALIASES.get(normalized);
+  if (aliasMatch) return aliasMatch;
 
-  // 3. Catalog match
-  if (WORLD_COUNTRIES_CATALOG[lower]) return lower;
-  if (WORLD_COUNTRIES_CATALOG[normalized]) return normalized;
+  // 3. Catalog match via index
+  const catMatch = CATALOG_BY_NORM.get(lower) || CATALOG_BY_NORM.get(normalized);
+  if (catMatch) return catMatch;
 
   // 4. Clean abbreviations
-  let cleaned = normalized
+  const cleaned = normalized
     .replace(/\bdem rep\b/g, 'democratic republic')
     .replace(/\brep\b/g, 'republic')
     .replace(/\bis\b/g, 'islands')
@@ -852,21 +878,11 @@ export function resolveCountryKey(input: string): string | undefined {
     .replace(/\s+/g, ' ')
     .trim();
 
-  if (COUNTRY_ALIASES[cleaned]) return COUNTRY_ALIASES[cleaned];
-  if (WORLD_COUNTRIES_CATALOG[cleaned]) return cleaned;
+  const cleanedAlias = NORMALIZED_ALIASES.get(cleaned);
+  if (cleanedAlias) return cleanedAlias;
 
-  // 5. Check if matches key in catalog
-  for (const [catKey, catInfo] of Object.entries(WORLD_COUNTRIES_CATALOG)) {
-    if (
-      normalizeGeoString(catInfo.nameEn) === cleaned ||
-      normalizeGeoString(catInfo.nameVi) === cleaned ||
-      normalizeGeoString(catInfo.nameEn) === normalized ||
-      normalizeGeoString(catInfo.nameVi) === normalized ||
-      catInfo.iso2.toLowerCase() === lower
-    ) {
-      return catKey;
-    }
-  }
+  const cleanedCat = CATALOG_BY_NORM.get(cleaned);
+  if (cleanedCat) return cleanedCat;
 
   return undefined;
 }
@@ -884,41 +900,80 @@ export function matchCountryData(idOrName: string): CountryData | undefined {
     return COUNTRIES_DATA[key];
   }
 
-  // Exact comparison across registered countries
-  const norm = normalizeGeoString(raw);
   const lower = raw.toLowerCase();
-  for (const country of Object.values(COUNTRIES_DATA)) {
-    if (
-      country.id.toLowerCase() === lower ||
-      country.code.toLowerCase() === lower ||
-      normalizeGeoString(country.nameVi) === norm ||
-      normalizeGeoString(country.nameEn) === norm ||
-      country.nameVi.toLowerCase() === lower ||
-      country.nameEn.toLowerCase() === lower
-    ) {
-      return country;
-    }
+  const norm = normalizeGeoString(raw);
+
+  // Quick indexed lookup
+  if (COUNTRY_BY_CODE.has(lower)) {
+    return COUNTRY_BY_CODE.get(lower);
+  }
+  if (COUNTRY_BY_NORM_NAME.has(norm)) {
+    return COUNTRY_BY_NORM_NAME.get(norm);
+  }
+  if (COUNTRY_BY_NORM_NAME.has(lower)) {
+    return COUNTRY_BY_NORM_NAME.get(lower);
   }
 
-  // Check catalog for key match or name match
+  // Check catalog for key match
   if (key && WORLD_COUNTRIES_CATALOG[key]) {
     return createDynamicCountryFromFeature(key);
   }
 
-  for (const [catKey, catInfo] of Object.entries(WORLD_COUNTRIES_CATALOG)) {
-    if (
-      catKey.toLowerCase() === lower ||
-      catInfo.iso2.toLowerCase() === lower ||
-      normalizeGeoString(catInfo.nameVi) === norm ||
-      normalizeGeoString(catInfo.nameEn) === norm ||
-      catInfo.nameVi.toLowerCase() === lower ||
-      catInfo.nameEn.toLowerCase() === lower
-    ) {
-      return createDynamicCountryFromFeature(catKey);
-    }
+  const catKey = CATALOG_BY_NORM.get(norm) || CATALOG_BY_NORM.get(lower);
+  if (catKey && WORLD_COUNTRIES_CATALOG[catKey]) {
+    return createDynamicCountryFromFeature(catKey);
   }
 
   return undefined;
+}
+
+/**
+ * Extracts CountryData from a GeoJSON feature.
+ * Consolidates feature matching for 3D Globe and 2D Map.
+ */
+export function getCountryFromGeoFeature(feature: GeoFeature): CountryData | null {
+  if (!feature) return null;
+  const props = feature.properties || {};
+  const nameStr = (props.NAME || props.ADMIN || props.name || props.SOVEREIGNT || props.NAME_LONG || props.id || '') as string;
+  const iso2 = (props.ISO_A2 || props.iso_a2 || props.WB_A2 || '') as string;
+  const iso3 = (props.ISO_A3 || props.iso_a3 || props.ADM0_A3 || props.SOV_A3 || props.GU_A3 || props.WB_A3 || '') as string;
+  const continent = (props.CONTINENT || props.continent || '') as string;
+
+  const matched =
+    matchCountryData(nameStr) ||
+    matchCountryData(iso3) ||
+    (iso2 && iso2 !== '-99' ? matchCountryData(iso2) : undefined) ||
+    (props.SOVEREIGNT ? matchCountryData(props.SOVEREIGNT as string) : undefined) ||
+    (props.ADMIN ? matchCountryData(props.ADMIN as string) : undefined) ||
+    (props.NAME_LONG ? matchCountryData(props.NAME_LONG as string) : undefined);
+
+  if (matched) return matched;
+
+  // Approximate center calculation for dynamic country
+  let centerLat = 0;
+  let centerLng = 0;
+  try {
+    if (feature.geometry && feature.geometry.coordinates) {
+      const coords = feature.geometry.coordinates;
+      const ring = Array.isArray(coords[0]) && Array.isArray(coords[0][0])
+        ? (coords[0] as number[][])
+        : (Array.isArray(coords[0]) ? (coords as unknown as number[][]) : []);
+      if (ring.length > 0) {
+        const sample = ring.slice(0, 10);
+        const sumLng = sample.reduce((acc, pt) => acc + (pt[0] || 0), 0);
+        const sumLat = sample.reduce((acc, pt) => acc + (pt[1] || 0), 0);
+        centerLng = Math.round((sumLng / sample.length) * 100) / 100;
+        centerLat = Math.round((sumLat / sample.length) * 100) / 100;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  if (nameStr) {
+    return createDynamicCountryFromFeature(nameStr, iso2, iso3, continent, centerLat, centerLng);
+  }
+  return null;
 }
 
 /**

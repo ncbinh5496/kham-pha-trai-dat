@@ -12,6 +12,7 @@ import {
 import { CountryData, DirectionQuizMode } from '../../types';
 import { COUNTRIES_DATA } from '../../data/countries';
 import { VIETNAM_COORDINATES, getRelativeDirection, getDirectionFromVietnam } from '../../utils/geoUtils';
+import { DIRECTION_QUESTIONS } from '../../data/learningData';
 import confetti from 'canvas-confetti';
 
 interface DirectionLearningProps {
@@ -55,59 +56,6 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
     onFocusRegion?.(VIETNAM_COORDINATES.lat, VIETNAM_COORDINATES.lng, 2.0, 2.4);
   }, [onFocusRegion]);
 
-  // Direction Questions for Elementary Students
-  const directionQuestions = useMemo(() => [
-    {
-      id: 'd1',
-      prompt: 'Quy ước phương hướng trên bản đồ: Phía TRÊN của bản đồ là hướng nào?',
-      options: ['Hướng Bắc', 'Hướng Nam', 'Hướng Đông', 'Hướng Tây'],
-      correct: 'Hướng Bắc',
-      explanation: 'Theo quy ước chuẩn của bản đồ địa lí: Phía trên là hướng Bắc, phía dưới là hướng Nam.'
-    },
-    {
-      id: 'd2',
-      prompt: 'Phía BÊN PHẢI của bản đồ chỉ hướng nào?',
-      options: ['Hướng Tây', 'Hướng Đông', 'Hướng Bắc', 'Hướng Nam'],
-      correct: 'Hướng Đông',
-      explanation: 'Bên phải của bản đồ là hướng Đông (nơi Mặt Trời mọc), bên trái là hướng Tây.'
-    },
-    {
-      id: 'd3',
-      prompt: 'Trung Quốc nằm ở hướng nào so với Việt Nam?',
-      options: ['Phía Bắc', 'Phía Nam', 'Phía Đông', 'Phía Tây'],
-      correct: 'Phía Bắc',
-      explanation: 'Trung Quốc nằm ở phía trên (phía Bắc) của dải đất hình chữ S Việt Nam.'
-    },
-    {
-      id: 'd4',
-      prompt: 'Nước Lào nằm ở hướng nào so với Việt Nam?',
-      options: ['Phía Đông', 'Phía Tây', 'Phía Nam', 'Phía Bắc'],
-      correct: 'Phía Tây',
-      explanation: 'Nước Lào nằm dọc theo sườn Tây dãy Trường Sơn, tức là ở phía Tây của Việt Nam.'
-    },
-    {
-      id: 'd5',
-      prompt: 'Quần đảo Hoàng Sa và Trường Sa nằm ở hướng nào so với đất liền Việt Nam?',
-      options: ['Phía Tây', 'Phía Bắc', 'Phía Đông', 'Phía Nam'],
-      correct: 'Phía Đông',
-      explanation: 'Hai quần đảo Hoàng Sa và Trường Sa nằm giữa vùng Biển Đông ở phía Đông của nước ta.'
-    },
-    {
-      id: 'd6',
-      prompt: 'Nhật Bản nằm ở hướng nào so với Việt Nam?',
-      options: ['Phía Tây Nam', 'Phía Đông Bắc', 'Phía Tây Bắc', 'Phía Nam'],
-      correct: 'Phía Đông Bắc',
-      explanation: 'Nhật Bản nằm ở phía Đông Bắc của Việt Nam trên bản đồ châu Á.'
-    },
-    {
-      id: 'd7',
-      prompt: 'Nước Campuchia nằm ở hướng nào so với Việt Nam?',
-      options: ['Phía Bắc', 'Phía Tây Nam', 'Phía Đông', 'Phía Đông Nam'],
-      correct: 'Phía Tây Nam',
-      explanation: 'Campuchia tiếp giáp với các tỉnh miền Nam và Tây Nguyên, nằm ở phía Tây Nam của Việt Nam.'
-    }
-  ], []);
-
   // Compute direction from Vietnam for currently selected country
   const relativeDirection = useMemo(() => {
     if (!selectedCountry) return null;
@@ -126,7 +74,7 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
     );
   }, [selectedCountry, directionMode]);
 
-  const currentQ = directionQuestions[quizIndex];
+  const currentQ = DIRECTION_QUESTIONS[quizIndex];
 
   const handleAnswerClick = (option: string) => {
     setUserSelection(option);
@@ -479,7 +427,7 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
           <div className="p-4 rounded-2xl bg-slate-800/80 border border-amber-500/30">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                Câu hỏi {quizIndex + 1} / {directionQuestions.length}
+                Câu hỏi {quizIndex + 1} / {DIRECTION_QUESTIONS.length}
               </span>
               <button
                 onClick={() => setShowAnswer(!showAnswer)}
@@ -544,7 +492,7 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
 
               <button
                 onClick={() => {
-                  if (quizIndex < directionQuestions.length - 1) {
+                  if (quizIndex < DIRECTION_QUESTIONS.length - 1) {
                     setQuizIndex(i => i + 1);
                     setUserSelection(null);
                     setShowAnswer(false);
@@ -556,7 +504,7 @@ export const DirectionLearning: React.FC<DirectionLearningProps> = ({
                 }}
                 className="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-xs font-bold text-white shadow-md shadow-sky-500/30"
               >
-                {quizIndex < directionQuestions.length - 1 ? 'Câu tiếp theo →' : 'Làm lại'}
+                {quizIndex < DIRECTION_QUESTIONS.length - 1 ? 'Câu tiếp theo →' : 'Làm lại'}
               </button>
             </div>
           </div>

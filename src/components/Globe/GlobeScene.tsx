@@ -12,6 +12,7 @@ import { COUNTRIES_DATA } from '../../data/countries';
 import { CONTINENTS_DATA } from '../../data/continents';
 import { NATURAL_LANDMARKS } from '../../data/nature';
 import { GeoJSONData, GeoFeature, FALLBACK_GEOJSON } from '../../data/geoJsonData';
+import { getGeoJSON } from '../../services/geoData';
 import {
   VIETNAM_COORDINATES,
   matchCountryData,
@@ -341,43 +342,14 @@ export const GlobeScene: React.FC<GlobeSceneProps> = ({
   const setHoveredCountryRef = useRef(setHoveredCountry);
   setHoveredCountryRef.current = setHoveredCountry;
 
-  // Load comprehensive world GeoJSON with local asset priority & graceful fallback
+  // Load comprehensive world GeoJSON with cached service
   useEffect(() => {
     let isMounted = true;
-    const fetchGeoJSON = async () => {
-      // Priority 1: Local asset for offline / low connectivity in schools
-      try {
-        const geoUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/geo/countries.geojson`;
-        const localRes = await fetch(geoUrl);
-        if (localRes.ok) {
-          const data = await localRes.json();
-          if (isMounted && data && data.features && data.features.length > 0) {
-            setGeoData(data);
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn('Local geojson load failed, attempting remote fallback...', e);
+    getGeoJSON().then((data) => {
+      if (isMounted && data && data.features && data.features.length > 0) {
+        setGeoData(data);
       }
-
-      // Priority 2: Remote source
-      try {
-        const response = await fetch(
-          'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson'
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (isMounted && data && data.features && data.features.length > 0) {
-            setGeoData(data);
-            return;
-          }
-        }
-      } catch {
-        // Bundled fallback is already initialized
-      }
-    };
-
-    fetchGeoJSON();
+    });
     return () => {
       isMounted = false;
     };

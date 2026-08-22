@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { CountryData } from '../../types';
 import { COUNTRIES_DATA, SOUTHEAST_ASIA_COUNTRY_IDS } from '../../data/countries';
+import { DIRECT_NEIGHBORS, NEIGHBOR_QUIZ_QUESTIONS } from '../../data/learningData';
 import confetti from 'canvas-confetti';
 
 interface VietnamNeighborsProps {
@@ -36,31 +37,6 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
   const [selectedQuizOption, setSelectedQuizOption] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  // 3 Direct land neighbors of Vietnam
-  const directNeighbors = [
-    {
-      countryId: 'china',
-      direction: 'Phía Bắc',
-      borderLength: '1.449 km',
-      significance: 'Biên giới phía Bắc tiếp giáp với 7 tỉnh của Việt Nam (Điện Biên, Lai Châu, Lào Cai, Hà Giang, Cao Bằng, Lạng Sơn, Quảng Ninh).',
-      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-    },
-    {
-      countryId: 'laos',
-      direction: 'Phía Tây',
-      borderLength: '2.169 km',
-      significance: 'Đường biên giới đất liền dài nhất với nước ta, trải dài dọc dãy núi Trường Sơn hùng vĩ qua 10 tỉnh thành.',
-      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-    },
-    {
-      countryId: 'cambodia',
-      direction: 'Phía Tây Nam',
-      borderLength: '1.258 km',
-      significance: 'Biên giới phía Tây Nam gắn liền với vùng đồng bằng sông Cửu Long màu mỡ và các tỉnh Nam Bộ, Tây Nguyên.',
-      badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/40'
-    }
-  ];
-
   // 11 Southeast Asian Countries
   const southeastAsiaList = SOUTHEAST_ASIA_COUNTRY_IDS
     .map(id => COUNTRIES_DATA[id])
@@ -80,58 +56,6 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
     }
   }, [activeTab, onFocusRegion, onSetHighlightCountries]);
 
-  // Elementary Geography Quiz Questions
-  const neighborQuiz = [
-    {
-      id: 'q1',
-      question: 'Việt Nam có chung đường biên giới trên đất liền với những quốc gia nào?',
-      options: [
-        'Trung Quốc, Lào, Campuchia',
-        'Thái Lan, Lào, Campuchia',
-        'Trung Quốc, Myanmar, Lào',
-        'Indonesia, Malaysia, Philippines'
-      ],
-      correctIndex: 0,
-      explanation: 'Việt Nam có 3 nước láng giềng giáp đất liền: Trung Quốc (phía Bắc), Lào (phía Tây) và Campuchia (phía Tây Nam).'
-    },
-    {
-      id: 'q2',
-      question: 'Quốc gia nào có đường biên giới trên đất liền DÀI NHẤT với Việt Nam?',
-      options: [
-        'Trung Quốc (1.449 km)',
-        'Lào (2.169 km)',
-        'Campuchia (1.258 km)',
-        'Thái Lan (0 km)'
-      ],
-      correctIndex: 1,
-      explanation: 'Lào là nước có đường biên giới đất liền dài nhất với Việt Nam, dài khoảng 2.169 km dọc theo dải Trường Sơn.'
-    },
-    {
-      id: 'q3',
-      question: 'Ở phía Đông và phía Nam, phần đất liền Việt Nam tiếp giáp với vùng biển nào?',
-      options: [
-        'Biển Đông',
-        'Biển Nhật Bản',
-        'Biển Đỏ',
-        'Ấn Độ Dương'
-      ],
-      correctIndex: 0,
-      explanation: 'Toàn bộ phía Đông, Nam và Tây Nam nước ta giáp với vùng Biển Đông giàu đẹp với bờ biển dài 3.260 km.'
-    },
-    {
-      id: 'q4',
-      question: 'Khu vực Đông Nam Á hiện nay bao gồm bao nhiêu quốc gia?',
-      options: [
-        '9 quốc gia',
-        '10 quốc gia',
-        '11 quốc gia',
-        '12 quốc gia'
-      ],
-      correctIndex: 2,
-      explanation: 'Đông Nam Á gồm 11 quốc gia: Việt Nam, Lào, Campuchia, Thái Lan, Myanmar, Malaysia, Singapore, Indonesia, Philippines, Brunei và Timor-Leste.'
-    }
-  ];
-
   const handleCountryClick = (c: CountryData) => {
     onSelectCountry(c);
     onSetHighlightCountries?.(['vietnam', c.id], c.id);
@@ -147,7 +71,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
     }
   };
 
-  const currentQ = neighborQuiz[quizStep];
+  const currentQ = NEIGHBOR_QUIZ_QUESTIONS[quizStep];
 
   const handleQuizAnswer = (index: number) => {
     setSelectedQuizOption(index);
@@ -270,7 +194,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {directNeighbors.map((item) => {
+              {DIRECT_NEIGHBORS.map((item) => {
                 const country = COUNTRIES_DATA[item.countryId];
                 if (!country) return null;
 
@@ -375,7 +299,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
           <div className="p-4 rounded-2xl bg-slate-800/80 border border-amber-500/30">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                Câu hỏi {quizStep + 1} / {neighborQuiz.length}
+                Câu hỏi {quizStep + 1} / {NEIGHBOR_QUIZ_QUESTIONS.length}
               </span>
               <button
                 onClick={() => setShowAnswer(!showAnswer)}
@@ -440,7 +364,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
 
               <button
                 onClick={() => {
-                  if (quizStep < neighborQuiz.length - 1) {
+                  if (quizStep < NEIGHBOR_QUIZ_QUESTIONS.length - 1) {
                     setQuizStep(i => i + 1);
                     setSelectedQuizOption(null);
                     setShowAnswer(false);
@@ -452,7 +376,7 @@ export const VietnamNeighbors: React.FC<VietnamNeighborsProps> = ({
                 }}
                 className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-bold text-slate-950 shadow-md shadow-amber-500/30"
               >
-                {quizStep < neighborQuiz.length - 1 ? 'Câu tiếp theo →' : 'Làm lại'}
+                {quizStep < NEIGHBOR_QUIZ_QUESTIONS.length - 1 ? 'Câu tiếp theo →' : 'Làm lại'}
               </button>
             </div>
           </div>

@@ -1061,8 +1061,9 @@ export const DEFAULT_COUNTRY_DATA: CountryData = {
   landmarks: []
 };
 
+export const DEFAULT_VIETNAM_CAMERA_ALTITUDE = 1.85;
+
 export const VIETNAM_COORDINATES = {
-  lat: 14.0583,
-  lng: 108.2772,
-  altitude: 1.85
+  lat: BASE_COUNTRIES_DATA.vietnam.lat,
+  lng: BASE_COUNTRIES_DATA.vietnam.lng
 };

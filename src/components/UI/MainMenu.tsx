@@ -8,10 +8,7 @@ import {
   BookOpen,
   MoreHorizontal,
   Scale,
-  Sparkles,
-  ChevronUp,
-  Compass,
-  ShieldCheck
+  ChevronUp
 } from 'lucide-react';
 
 interface MainMenuProps {
@@ -24,6 +21,8 @@ interface MainMenuProps {
   onOpenCompare?: () => void;
 }
 
+type OpenMenu = 'learning' | 'games' | 'more' | null;
+
 export const MainMenu: React.FC<MainMenuProps> = ({
   currentMode,
   setAppMode,
@@ -33,24 +32,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   setActiveLearningActivity,
   onOpenCompare
 }) => {
-  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [isGamesDropdownOpen, setIsGamesDropdownOpen] = useState(false);
-  const [isLearningDropdownOpen, setIsLearningDropdownOpen] = useState(false);
-  const moreRef = useRef<HTMLDivElement>(null);
-  const gamesRef = useRef<HTMLDivElement>(null);
-  const learningRef = useRef<HTMLDivElement>(null);
+  const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
+  const menuContainerRef = useRef<HTMLDivElement>(null);
 
   // Close menus on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setIsMoreMenuOpen(false);
-      }
-      if (gamesRef.current && !gamesRef.current.contains(e.target as Node)) {
-        setIsGamesDropdownOpen(false);
-      }
-      if (learningRef.current && !learningRef.current.contains(e.target as Node)) {
-        setIsLearningDropdownOpen(false);
+      if (menuContainerRef.current && !menuContainerRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -62,7 +51,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       id="bottom-main-menu"
       className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto"
     >
-      <div className="relative flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-slate-950/90 backdrop-blur-2xl border border-slate-800/90 rounded-3xl shadow-2xl shadow-slate-950/90">
+      <div
+        ref={menuContainerRef}
+        className="relative flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-slate-950/90 backdrop-blur-2xl border border-slate-800/90 rounded-3xl shadow-2xl shadow-slate-950/90"
+      >
         {/* 1. KHÁM PHÁ TRÁI ĐẤT */}
         <button
           id="nav-btn-explore"
@@ -70,13 +62,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             setAppMode('explore');
             setActiveGameType(null);
             setActiveLearningActivity(null);
-            setIsMoreMenuOpen(false);
-            setIsGamesDropdownOpen(false);
-            setIsLearningDropdownOpen(false);
+            setOpenMenu(null);
           }}
-          className={`flex items-center gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-colors ${
             currentMode === 'explore' && !activeGameType && !activeLearningActivity
-              ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/30 scale-105'
+              ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
               : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
           }`}
         >
@@ -85,27 +75,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </button>
 
         {/* 2. BÀI HỌC ĐỊA LÍ TIỂU HỌC */}
-        <div ref={learningRef} className="relative">
+        <div className="relative">
           <button
             id="nav-btn-learning"
             onClick={() => {
-              setIsLearningDropdownOpen(!isLearningDropdownOpen);
-              setIsGamesDropdownOpen(false);
-              setIsMoreMenuOpen(false);
+              setOpenMenu(prev => prev === 'learning' ? null : 'learning');
             }}
-            className={`flex items-center gap-1.5 sm:gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 sm:gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-colors ${
               activeLearningActivity
-                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 scale-105'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Bài học</span>
-            <ChevronUp className={`w-3.5 h-3.5 transition-transform ${isLearningDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronUp className={`w-3.5 h-3.5 transition-transform ${openMenu === 'learning' ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Learning Activities Popover */}
-          {isLearningDropdownOpen && (
+          {openMenu === 'learning' && (
             <div
               id="learning-selection-dropdown"
               className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-72 bg-slate-950/95 backdrop-blur-2xl border border-slate-800 rounded-3xl shadow-2xl p-2.5 space-y-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200"
@@ -120,7 +108,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 onClick={() => {
                   setActiveLearningActivity('vietnam_neighbors');
                   setActiveGameType(null);
-                  setIsLearningDropdownOpen(false);
+                  setOpenMenu(null);
                 }}
                 className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all ${
                   activeLearningActivity === 'vietnam_neighbors'
@@ -143,7 +131,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 onClick={() => {
                   setActiveLearningActivity('direction_finding');
                   setActiveGameType(null);
-                  setIsLearningDropdownOpen(false);
+                  setOpenMenu(null);
                 }}
                 className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all ${
                   activeLearningActivity === 'direction_finding'
@@ -166,7 +154,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 onClick={() => {
                   setActiveLearningActivity('hemispheres_equator');
                   setActiveGameType(null);
-                  setIsLearningDropdownOpen(false);
+                  setOpenMenu(null);
                 }}
                 className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all ${
                   activeLearningActivity === 'hemispheres_equator'
@@ -193,13 +181,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             setAppMode(currentMode === 'continents' ? 'explore' : 'continents');
             setActiveGameType(null);
             setActiveLearningActivity(null);
-            setIsMoreMenuOpen(false);
-            setIsGamesDropdownOpen(false);
-            setIsLearningDropdownOpen(false);
+            setOpenMenu(null);
           }}
-          className={`flex items-center gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-colors ${
             currentMode === 'continents'
-              ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30 scale-105'
+              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30'
               : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
           }`}
         >
@@ -214,13 +200,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             setAppMode(currentMode === 'nature' ? 'explore' : 'nature');
             setActiveGameType(null);
             setActiveLearningActivity(null);
-            setIsMoreMenuOpen(false);
-            setIsGamesDropdownOpen(false);
-            setIsLearningDropdownOpen(false);
+            setOpenMenu(null);
           }}
-          className={`flex items-center gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-colors ${
             currentMode === 'nature'
-              ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/30 scale-105'
+              ? 'bg-teal-500 text-slate-950 shadow-md shadow-teal-500/30'
               : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
           }`}
         >
@@ -229,27 +213,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </button>
 
         {/* 5. THỬ THÁCH (Trò chơi) */}
-        <div ref={gamesRef} className="relative">
+        <div className="relative">
           <button
             id="nav-btn-games"
             onClick={() => {
-              setIsGamesDropdownOpen(!isGamesDropdownOpen);
-              setIsLearningDropdownOpen(false);
-              setIsMoreMenuOpen(false);
+              setOpenMenu(prev => prev === 'games' ? null : 'games');
             }}
-            className={`flex items-center gap-1.5 sm:gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 sm:gap-2 min-h-[44px] py-2.5 px-3 sm:px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-colors ${
               activeGameType
-                ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30 scale-105'
+                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Thử thách</span>
-            <ChevronUp className={`w-3.5 h-3.5 transition-transform ${isGamesDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronUp className={`w-3.5 h-3.5 transition-transform ${openMenu === 'games' ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Games Selection Popover */}
-          {isGamesDropdownOpen && (
+          {openMenu === 'games' && (
             <div
               id="games-selection-dropdown"
               className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-64 bg-slate-950/95 backdrop-blur-2xl border border-slate-800 rounded-3xl shadow-2xl p-2.5 space-y-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200"
@@ -265,7 +247,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   setActiveGameType('find_country');
                   setActiveLearningActivity(null);
                   setAppMode('explore');
-                  setIsGamesDropdownOpen(false);
+                  setOpenMenu(null);
                 }}
                 className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all ${
                   activeGameType === 'find_country'
@@ -289,7 +271,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   setActiveGameType('guess_country');
                   setActiveLearningActivity(null);
                   setAppMode('explore');
-                  setIsGamesDropdownOpen(false);
+                  setOpenMenu(null);
                 }}
                 className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all ${
                   activeGameType === 'guess_country'
@@ -310,17 +292,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </div>
 
         {/* 6. THÊM (More Options Popover) */}
-        <div ref={moreRef} className="relative">
+        <div className="relative">
           <button
             id="nav-btn-more"
             onClick={() => {
-              setIsMoreMenuOpen(!isMoreMenuOpen);
-              setIsGamesDropdownOpen(false);
-              setIsLearningDropdownOpen(false);
+              setOpenMenu(prev => prev === 'more' ? null : 'more');
             }}
-            className={`flex items-center justify-center min-h-[44px] w-11 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
-              isMoreMenuOpen || currentMode === 'compare'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+            className={`flex items-center justify-center min-h-[44px] w-11 rounded-2xl text-xs sm:text-sm font-bold transition-colors ${
+              openMenu === 'more' || currentMode === 'compare'
+                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
             title="Xem thêm tính năng"
@@ -329,7 +309,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </button>
 
           {/* More Popover */}
-          {isMoreMenuOpen && (
+          {openMenu === 'more' && (
             <div
               id="more-options-dropdown"
               className="absolute bottom-full mb-3 right-0 w-56 bg-slate-950/95 backdrop-blur-2xl border border-slate-800 rounded-3xl shadow-2xl p-2 space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-200"
@@ -343,7 +323,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 onClick={() => {
                   if (onOpenCompare) onOpenCompare();
                   else setAppMode('compare');
-                  setIsMoreMenuOpen(false);
+                  setOpenMenu(null);
                 }}
                 className="w-full flex items-center gap-2.5 p-2.5 hover:bg-slate-800/80 rounded-2xl text-xs font-bold text-slate-200 transition-colors text-left"
               >

@@ -36,15 +36,18 @@ export interface CountryData {
 
 export type MapViewMode = '3d_globe' | '2d_map';
 
+export interface MapFocusRequest {
+  lat: number;
+  lng: number;
+  altitude?: number;
+  zoom2D?: number;
+  timestamp: number;
+}
+
 export type LearningActivity =
   | 'vietnam_neighbors'
   | 'direction_finding'
-  | 'direction_learning'
-  | 'hemispheres'
-  | 'hemispheres_equator'
-  | 'find_vietnam'
-  | 'find_neighbor'
-  | 'prime_meridian';
+  | 'hemispheres_equator';
 
 export type TeachingLevel = 'basic' | 'medium' | 'advanced'; // Cơ bản | Trung bình | Nâng cao
 

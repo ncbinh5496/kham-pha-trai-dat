@@ -17,6 +17,7 @@ import { CountryData, LayerConfig, NaturalLandmark, WonderRecord, FlightArcData 
 import { COUNTRIES_DATA } from '../../data/countries';
 import { matchCountryData, VIETNAM_COORDINATES, calculateDistanceKm, getRelativeDirection } from '../../utils/geoUtils';
 import { NATURAL_LANDMARKS } from '../../data/nature';
+import { getGeoJSON } from '../../services/geoData';
 
 interface WorldMap2DProps {
   selectedCountry: CountryData | null;
@@ -94,44 +95,23 @@ export const WorldMap2D: React.FC<WorldMap2DProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  // Fetch GeoJSON with local priority & fallback
+  // Fetch GeoJSON with cached service
   useEffect(() => {
     let isMounted = true;
-    const fetchGeo = async () => {
-      setIsLoading(true);
-      try {
-        const geoUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/geo/countries.geojson`;
-        const localRes = await fetch(geoUrl);
-        if (localRes.ok) {
-          const data = await localRes.json();
-          if (isMounted && data && data.features) {
-            setGeoData(data);
-            setIsLoading(false);
-            return;
-          }
+    setIsLoading(true);
+    getGeoJSON()
+      .then((data) => {
+        if (isMounted && data && data.features) {
+          setGeoData(data);
         }
-      } catch {
-        // Fallback
-      }
-
-      try {
-        const remoteRes = await fetch(
-          'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson'
-        );
-        if (remoteRes.ok) {
-          const data = await remoteRes.json();
-          if (isMounted && data && data.features) {
-            setGeoData(data);
-          }
-        }
-      } catch (err) {
+      })
+      .catch((err) => {
         console.error('Failed to load 2D map geojson', err);
-      } finally {
+      })
+      .finally(() => {
         if (isMounted) setIsLoading(false);
-      }
-    };
+      });
 
-    fetchGeo();
     return () => {
       isMounted = false;
     };

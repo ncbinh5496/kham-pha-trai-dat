@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { CountryData } from '../../types';
 import { COUNTRIES_DATA } from '../../data/countries';
+import { HEMISPHERE_PRACTICE_COUNTRIES } from '../../data/learningData';
 import confetti from 'canvas-confetti';
 
 export type HemisphereAnswer = 'north' | 'south' | 'both';
@@ -20,12 +21,6 @@ interface HemispheresLearningProps {
   onClose: () => void;
   onToggleEquatorLayer?: (enabled: boolean) => void;
   onFocusRegion?: (lat: number, lng: number, altitude: number, zoom2D?: number) => void;
-}
-
-interface PracticeItem {
-  countryId: string;
-  expected: HemisphereAnswer;
-  reason: string;
 }
 
 export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
@@ -46,47 +41,8 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
     }
   }, [onToggleEquatorLayer]);
 
-  // Verified geographical hemisphere data
-  const practiceCountries: PracticeItem[] = [
-    { 
-      countryId: 'vietnam', 
-      expected: 'north', 
-      reason: 'Việt Nam nằm hoàn toàn ở Bắc bán cầu (từ khoảng 8°30\'B đến 23°23\'B), phía trên đường Xích đạo.' 
-    },
-    { 
-      countryId: 'indonesia', 
-      expected: 'both', 
-      reason: 'Indonesia nằm vắt ngang đường Xích đạo (0°), có các đảo nằm ở cả Bắc bán cầu (Bắc Sumatra, Bắc Borneo, Bắc Sulawesi...) và Nam bán cầu (Java, Bali, Nam Sumatra...).' 
-    },
-    { 
-      countryId: 'brazil', 
-      expected: 'both', 
-      reason: 'Phần lớn lãnh thổ Brazil nằm ở Nam bán cầu, nhưng đường Xích đạo đi qua phía Bắc đất nước (gần thành phố Macapá và cửa sông Amazon), nên thuộc cả 2 bán cầu.' 
-    },
-    { 
-      countryId: 'australia', 
-      expected: 'south', 
-      reason: 'Australia nằm hoàn toàn ở Nam bán cầu, vì thế mùa hè ở đây (tháng 12 - tháng 2) ngược lại với mùa đông ở Việt Nam.' 
-    },
-    { 
-      countryId: 'russia', 
-      expected: 'north', 
-      reason: 'Nga là quốc gia rộng lớn nhất thế giới, nằm hoàn toàn ở Bắc bán cầu trải dài đến tận Bắc Cực.' 
-    },
-    { 
-      countryId: 'south_africa', 
-      expected: 'south', 
-      reason: 'Nam Phi nằm ở cực nam của châu lục châu Phi, thuộc hoàn toàn Nam bán cầu.' 
-    },
-    { 
-      countryId: 'japan', 
-      expected: 'north', 
-      reason: 'Nhật Bản là quốc đảo nằm ở vùng ôn đới Bắc bán cầu thuộc khu vực Đông Á.' 
-    }
-  ];
-
-  const currentCountryObj = COUNTRIES_DATA[practiceCountries[practiceIndex].countryId];
-  const currentExpected = practiceCountries[practiceIndex].expected;
+  const currentCountryObj = COUNTRIES_DATA[HEMISPHERE_PRACTICE_COUNTRIES[practiceIndex].countryId];
+  const currentExpected = HEMISPHERE_PRACTICE_COUNTRIES[practiceIndex].expected;
 
   const handleChooseHemisphere = (choice: HemisphereAnswer) => {
     setSelectedHemisphere(choice);
@@ -222,7 +178,7 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
           <div className="p-4 rounded-2xl bg-slate-800/80 border border-amber-500/30">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                Câu {practiceIndex + 1} / {practiceCountries.length}
+                Câu {practiceIndex + 1} / {HEMISPHERE_PRACTICE_COUNTRIES.length}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -322,7 +278,7 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
             {/* Detailed Explanation */}
             {(showAnswer || selectedHemisphere !== null) && (
               <div className="mt-3 p-3 rounded-xl bg-slate-900/90 border border-slate-700/60 text-xs text-sky-200 leading-relaxed">
-                💡 <strong>Giải thích địa lí:</strong> {practiceCountries[practiceIndex].reason}
+                💡 <strong>Giải thích địa lí:</strong> {HEMISPHERE_PRACTICE_COUNTRIES[practiceIndex].reason}
               </div>
             )}
 
@@ -342,7 +298,7 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
 
               <button
                 onClick={() => {
-                  if (practiceIndex < practiceCountries.length - 1) {
+                  if (practiceIndex < HEMISPHERE_PRACTICE_COUNTRIES.length - 1) {
                     setPracticeIndex(i => i + 1);
                     setSelectedHemisphere(null);
                     setShowAnswer(false);
@@ -354,7 +310,7 @@ export const HemispheresLearning: React.FC<HemispheresLearningProps> = ({
                 }}
                 className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-bold text-slate-950 shadow-md shadow-amber-500/30"
               >
-                {practiceIndex < practiceCountries.length - 1 ? 'Nước tiếp theo →' : 'Làm lại từ đầu'}
+                {practiceIndex < HEMISPHERE_PRACTICE_COUNTRIES.length - 1 ? 'Nước tiếp theo →' : 'Làm lại từ đầu'}
               </button>
             </div>
           </div>
